@@ -38,6 +38,9 @@ ExportedObj/
 *.iml
 *.DotSettings
 
+# Visual Studio cache
+.vs/
+
 # Crash reports
 sysinfo.txt
 
