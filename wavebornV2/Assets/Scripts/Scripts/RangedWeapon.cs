@@ -1,7 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class RangedWeapon : WeaponBase
 {
+    [Header("Firing")]
     [SerializeField] private Transform firePoint;
     [SerializeField] private Projectile projectilePrefab;
     [SerializeField] private float projectileSpeed = 28f;
@@ -9,13 +10,22 @@ public class RangedWeapon : WeaponBase
     [SerializeField] private float spreadDegrees = 0f;
     [SerializeField] private LayerMask hitMask;
 
+    [Header("Audio Clips")]
+    [SerializeField] private AudioClip fireClip; // звук пострілу
+
     protected override void OnAttack()
     {
         if (!firePoint || !projectilePrefab) return;
 
-        for (int i = 0; i < Mathf.Max(1, pellets); i++)
+        // 🔊 один звук на постріл (навіть якщо багато пелет)
+        if (fireClip && audioSource)
+            audioSource.PlayOneShot(fireClip);
+
+        int shots = Mathf.Max(1, pellets);
+        for (int i = 0; i < shots; i++)
         {
             Quaternion spreadRot = firePoint.rotation;
+
             if (spreadDegrees > 0f)
             {
                 float yaw = Random.Range(-spreadDegrees, spreadDegrees);

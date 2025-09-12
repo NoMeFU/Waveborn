@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class WeaponSwitcher : MonoBehaviour
 {
@@ -21,6 +21,9 @@ public class WeaponSwitcher : MonoBehaviour
             if (weapons[i]) weapons[i].gameObject.SetActive(i == idx);
 
         Current = weapons[idx];
+
+        // 🔊 звук взяття у руки (кожна зброя має свій)
+        if (Current) Current.PlayEquipSound();
     }
 
     public void SelectNext(bool forward = true)

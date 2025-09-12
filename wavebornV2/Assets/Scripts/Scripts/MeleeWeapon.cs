@@ -1,5 +1,5 @@
-using UnityEngine;
-using System.Collections;   // <-- ïîòð³áíî äëÿ IEnumerator
+ï»¿using UnityEngine;
+using System.Collections;
 
 public class MeleeWeapon : WeaponBase
 {
@@ -9,6 +9,10 @@ public class MeleeWeapon : WeaponBase
     [SerializeField] private float swingTime = 0.18f;
     [SerializeField] private Collider hitbox;
     [SerializeField] private float knockback = 5f;
+
+    [Header("Audio Clips")]
+    [SerializeField] private AudioClip swingClip;
+    [SerializeField] private AudioClip hitClip;
 
     private Quaternion startRot, endRot;
 
@@ -24,6 +28,9 @@ public class MeleeWeapon : WeaponBase
     {
         StopAllCoroutines();
         StartCoroutine(Swing());
+
+        if (swingClip && audioSource)
+            audioSource.PlayOneShot(swingClip);
     }
 
     private IEnumerator Swing()
@@ -51,6 +58,10 @@ public class MeleeWeapon : WeaponBase
         if (other.TryGetComponent<Health>(out var hp))
         {
             hp.TakeDamage(damage);
+
+            if (hitClip && audioSource)
+                audioSource.PlayOneShot(hitClip);
+
             if (other.attachedRigidbody)
             {
                 Vector3 dir = (other.transform.position - pivot.position).normalized;
