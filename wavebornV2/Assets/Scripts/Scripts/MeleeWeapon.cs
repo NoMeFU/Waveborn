@@ -11,8 +11,8 @@ public class MeleeWeapon : WeaponBase
     [SerializeField] private float knockback = 5f;
 
     [Header("Audio Clips")]
-    [SerializeField] private AudioClip swingClip;
-    [SerializeField] private AudioClip hitClip;
+    [SerializeField] private AudioClip swingClip;  // замах
+    [SerializeField] private AudioClip hitClip;    // влучення
 
     private Quaternion startRot, endRot;
 
@@ -28,9 +28,7 @@ public class MeleeWeapon : WeaponBase
     {
         StopAllCoroutines();
         StartCoroutine(Swing());
-
-        if (swingClip && audioSource)
-            audioSource.PlayOneShot(swingClip);
+        if (swingClip && audioSource) audioSource.PlayOneShot(swingClip);
     }
 
     private IEnumerator Swing()
@@ -40,8 +38,7 @@ public class MeleeWeapon : WeaponBase
 
         while (t < swingTime)
         {
-            float k = t / swingTime;
-            float s = Mathf.SmoothStep(0f, 1f, k);
+            float s = Mathf.SmoothStep(0f, 1f, t / swingTime);
             pivot.localRotation = Quaternion.Slerp(startRot, endRot, s);
             t += Time.deltaTime;
             yield return null;
@@ -59,8 +56,7 @@ public class MeleeWeapon : WeaponBase
         {
             hp.TakeDamage(damage);
 
-            if (hitClip && audioSource)
-                audioSource.PlayOneShot(hitClip);
+            if (hitClip && audioSource) audioSource.PlayOneShot(hitClip);
 
             if (other.attachedRigidbody)
             {

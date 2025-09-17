@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8687464241815150574}
   - component: {fileID: 9115046186485168774}
   - component: {fileID: 8090616297906681569}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Magazin
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -94,7 +94,7 @@ GameObject:
   - component: {fileID: 3364386494575518166}
   - component: {fileID: 8090238395565490983}
   - component: {fileID: 6408142678902309898}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Trigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -177,7 +177,7 @@ GameObject:
   - component: {fileID: 2443064197750274706}
   - component: {fileID: 7498565506109407125}
   - component: {fileID: 6435669130347152107}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Slide
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -260,7 +260,7 @@ GameObject:
   - component: {fileID: 4546025706086170289}
   - component: {fileID: 7802020685930828202}
   - component: {fileID: 1253747162681977357}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Hammer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -341,7 +341,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8874841354373112840}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: CINEMA_4D_Editor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -372,7 +372,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2058223809053161601}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: FirePoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -405,7 +405,7 @@ GameObject:
   - component: {fileID: 1221809398092640350}
   - component: {fileID: 7125613638088330624}
   - component: {fileID: 9063446336300876490}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: M1911
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -420,8 +420,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6855946934633491681}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -1, z: 0, w: 0}
-  m_LocalPosition: {x: -0.0014037779, y: 0.0000000032067262, z: -0.053769693}
+  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -430,7 +430,7 @@ Transform:
   - {fileID: 2443064197750274706}
   - {fileID: 3364386494575518166}
   m_Father: {fileID: 8400492427659931496}
-  m_LocalEulerAnglesHint: {x: 0, y: -180, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &7125613638088330624
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -490,10 +490,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8400492427659931496}
-  - component: {fileID: 4136796147212026471}
   - component: {fileID: -1164675637281106872}
-  m_Layer: 0
-  m_Name: M1911 1
+  - component: {fileID: -7272227606477737941}
+  - component: {fileID: 2859757599262781406}
+  - component: {fileID: -1054495627547705192}
+  m_Layer: 2
+  m_Name: M1911 PickUp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -517,32 +519,6 @@ Transform:
   - {fileID: 1221809398092640350}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 177.947, z: 0}
---- !u!114 &4136796147212026471
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7675334882938410928}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 642abf72c80d5714890df83fcc3e129a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  weaponPrefab: {fileID: 7675334882938410928}
-  damage: 10
-  fireRate: 4
-  audioSource: {fileID: 0}
-  equipClip: {fileID: 8300000, guid: 445ab3514f6a44a43a422cb9240aed11, type: 3}
-  firePoint: {fileID: 2058223809053161601}
-  projectilePrefab: {fileID: 7134127699875090513, guid: 0dbf0cb7942964f408cb0a710abeeb01, type: 3}
-  projectileSpeed: 28
-  pellets: 1
-  spreadDegrees: 0
-  hitMask:
-    serializedVersion: 2
-    m_Bits: 128
-  fireClip: {fileID: 8300000, guid: 0ab847fe3d613c94d8967b356c7916ac, type: 3}
 --- !u!82 &-1164675637281106872
 AudioSource:
   m_ObjectHideFlags: 0
@@ -639,3 +615,65 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!54 &-7272227606477737941
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7675334882938410928}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!135 &2859757599262781406
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7675334882938410928}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-1054495627547705192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7675334882938410928}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46bcb5f519a1fdd4d942ef120e302307, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponPrefab: {fileID: 7675334882938410928, guid: 5c7ec125e38423a4a856836546355e6b, type: 3}
+  lifeTime: 60

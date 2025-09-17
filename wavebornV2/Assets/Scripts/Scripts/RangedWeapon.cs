@@ -11,30 +11,27 @@ public class RangedWeapon : WeaponBase
     [SerializeField] private LayerMask hitMask;
 
     [Header("Audio Clips")]
-    [SerializeField] private AudioClip fireClip; // звук пострілу
+    [SerializeField] private AudioClip fireClip;
 
     protected override void OnAttack()
     {
         if (!firePoint || !projectilePrefab) return;
 
-        // 🔊 один звук на постріл (навіть якщо багато пелет)
-        if (fireClip && audioSource)
-            audioSource.PlayOneShot(fireClip);
+        if (fireClip && audioSource) audioSource.PlayOneShot(fireClip);
 
-        int shots = Mathf.Max(1, pellets);
-        for (int i = 0; i < shots; i++)
+        int count = Mathf.Max(1, pellets);
+        for (int i = 0; i < count; i++)
         {
-            Quaternion spreadRot = firePoint.rotation;
-
+            Quaternion rot = firePoint.rotation;
             if (spreadDegrees > 0f)
             {
                 float yaw = Random.Range(-spreadDegrees, spreadDegrees);
                 float pitch = Random.Range(-spreadDegrees * 0.25f, spreadDegrees * 0.25f);
-                spreadRot = Quaternion.Euler(firePoint.eulerAngles + new Vector3(pitch, yaw, 0f));
+                rot = Quaternion.Euler(firePoint.eulerAngles + new Vector3(pitch, yaw, 0f));
             }
 
-            var p = Instantiate(projectilePrefab, firePoint.position, spreadRot);
-            p.Init(damage, spreadRot * Vector3.forward, projectileSpeed, hitMask);
+            var p = Instantiate(projectilePrefab, firePoint.position, rot);
+            p.Init(damage, rot * Vector3.forward, projectileSpeed, hitMask);
         }
     }
 }

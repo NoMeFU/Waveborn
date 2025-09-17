@@ -2,9 +2,12 @@
 
 public abstract class WeaponBase : MonoBehaviour
 {
+    [Header("Prefab")]
+    [SerializeField] private GameObject weaponPrefab; // <- ОРИГІНАЛЬНИЙ префаб цієї зброї (прив'яжи на самому префабі)
+
     [Header("Stats")]
     [SerializeField] protected float damage = 10f;
-    [SerializeField] protected float fireRate = 4f;
+    [SerializeField] protected float fireRate = 4f;   // атак/сек
     private float cooldown;
 
     [Header("Audio")]
@@ -30,9 +33,16 @@ public abstract class WeaponBase : MonoBehaviour
 
     public void PlayEquipSound()
     {
-        if (equipClip && audioSource)
-            audioSource.PlayOneShot(equipClip);
+        if (equipClip && audioSource) audioSource.PlayOneShot(equipClip);
     }
+
+    // Викличе WeaponSwitcher після інстансу з пікапа — щоб знати, що дропати потім
+    public void SetPrefabReference(GameObject prefab)
+    {
+        if (prefab != null) weaponPrefab = prefab;
+    }
+
+    public GameObject WeaponPrefab => weaponPrefab;
 
     protected abstract void OnAttack();
 }
