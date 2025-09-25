@@ -1,54 +1,47 @@
 using UnityEngine;
+using System;
 
-public class GrenadeWeapon : WeaponBase
+public class GrenadeWeapon : WeaponBase, IGrenadeInfo
 {
-    [Header("Grenade Setup")]
-    [SerializeField] private Grenade grenadePrefab;
-    [SerializeField] private Transform throwOrigin;
-    [SerializeField] private float throwForce = 12f;
-    [SerializeField] private float upwardForce = 2f;
-    [SerializeField] private int maxGrenades = 3;
-    [SerializeField] private int currentGrenades = 3;
+    [Header("Grenade Settings")]
+    [SerializeField] private GameObject grenadePrefab;
+    [SerializeField] private Transform throwPoint;
+    [SerializeField] private float throwForce = 16f;
 
-    [Header("Audio Clips")]
-    [SerializeField] private AudioClip throwClip;
+    [Header("Ammo")]
+    [SerializeField] private int maxGrenades = 3;
+    [SerializeField] private int startGrenades = 3;
+
+    public int CurrentGrenades { get; private set; }
+    public int MaxGrenades => maxGrenades;
+    public event Action<int, int> GrenadeCountChanged;
 
     protected override void Awake()
     {
         base.Awake();
-        if (!throwOrigin) throwOrigin = transform;
+        CurrentGrenades = Mathf.Clamp(startGrenades, 0, maxGrenades);
+        GrenadeCountChanged?.Invoke(CurrentGrenades, MaxGrenades);
     }
 
     protected override void OnAttack()
     {
-        if (currentGrenades <= 0 || !grenadePrefab) return;
+        if (CurrentGrenades <= 0) return;
+        if (!grenadePrefab || !throwPoint) return;
 
-        if (throwClip && audioSource) audioSource.PlayOneShot(throwClip);
-
-        var g = Instantiate(grenadePrefab, throwOrigin.position, Quaternion.identity);
+        // кинули гранату
+        var g = Instantiate(grenadePrefab, throwPoint.position, throwPoint.rotation);
         if (g.TryGetComponent<Rigidbody>(out var rb))
-        {
-            Vector3 dir = transform.forward + Vector3.up * 0.2f;
-            rb.AddForce(dir.normalized * throwForce + Vector3.up * upwardForce, ForceMode.VelocityChange);
-        }
+            rb.velocity = throwPoint.forward * throwForce;
 
-        currentGrenades--;
-
-        if (currentGrenades <= 0)
-        {
-            gameObject.SetActive(false);
-            var switcher = GetComponentInParent<WeaponSwitcher>();
-            if (switcher) switcher.SelectNext(true);
-        }
+        CurrentGrenades = Mathf.Max(0, CurrentGrenades - 1);
+        GrenadeCountChanged?.Invoke(CurrentGrenades, MaxGrenades);
     }
 
+    // додати здобич/підбір
     public void AddGrenades(int amount)
     {
-        currentGrenades = Mathf.Clamp(currentGrenades + amount, 0, maxGrenades);
-        if (currentGrenades > 0 && !gameObject.activeSelf)
-            gameObject.SetActive(true);
+        if (amount <= 0) return;
+        CurrentGrenades = Mathf.Clamp(CurrentGrenades + amount, 0, MaxGrenades);
+        GrenadeCountChanged?.Invoke(CurrentGrenades, MaxGrenades);
     }
-
-    public int Count => currentGrenades;
-    public int Max => maxGrenades;
 }
