@@ -8,8 +8,8 @@ public class WeaponSwitcher : MonoBehaviour
     [SerializeField] private List<WeaponBase> weapons = new();
     [SerializeField] private int startIndex = 0;
     [SerializeField, Min(1)] private int maxSlots = 3;
-    [SerializeField] private bool autoReplaceWhenFull = true;   // якщо повний інвентар: true=замінити поточну, false=ігнор пікап
-    [SerializeField] private bool preventDuplicates = true;     // заборонити дублікати того самого префаба
+    [SerializeField] private bool autoReplaceWhenFull = true;  // якщо інвентар повний: true=замінюємо поточну, false=ігноруємо пікап
+    [SerializeField] private bool preventDuplicates = true;    // забороняти повтор того самого префаба
 
     [Header("Mount Point")]
     [SerializeField] private Transform weaponRoot;
@@ -21,7 +21,6 @@ public class WeaponSwitcher : MonoBehaviour
     public WeaponBase Current { get; private set; }
     public int SlotCount => weapons.Count;
 
-    // 🔔 HUD підписується сюди
     public event Action<WeaponBase> WeaponChanged;
 
     private void Awake()
@@ -33,22 +32,37 @@ public class WeaponSwitcher : MonoBehaviour
             for (int i = 0; i < weapons.Count; i++)
                 if (weapons[i]) weapons[i].gameObject.SetActive(i == startIndex);
 
-            // Викликаємо вибір стартової — це гарантує OnEquip/звук/подію WeaponChanged
-            SelectIndex(Mathf.Clamp(startIndex, 0, weapons.Count - 1));
+            SelectIndex(Mathf.Clamp(startIndex, 0, weapons.Count - 1)); // тригерить WeaponChanged
+        }
+        else
+        {
+            // інвентарь пустий — повідомляємо HUD
+            Current = null;
+            WeaponChanged?.Invoke(null);
         }
     }
 
     public void SelectIndex(int idx)
     {
-        if (weapons.Count == 0) return;
-        idx = Mathf.Clamp(idx, 0, weapons.Count - 1);
+        if (weapons.Count == 0)
+        {
+            Current = null;
+            WeaponChanged?.Invoke(null);
+            return;
+        }
 
+        idx = Mathf.Clamp(idx, 0, weapons.Count - 1);
         var newW = weapons[idx];
-        if (!newW) return;
+        if (!newW)
+        {
+            Current = null;
+            WeaponChanged?.Invoke(null);
+            return;
+        }
 
         if (Current == newW)
         {
-            // вже активна — просто гарантуємо видимість і повідомимо HUD (корисно після рестарту)
+            // гарантуємо видимість і сповістимо HUD (на випадок відновлення сцени)
             for (int i = 0; i < weapons.Count; i++)
                 if (weapons[i]) weapons[i].gameObject.SetActive(i == idx);
 
@@ -56,8 +70,10 @@ public class WeaponSwitcher : MonoBehaviour
             return;
         }
 
+        // відчепляємо попередню
         if (Current) Current.OnUnequip();
 
+        // вмикаємо нову, решту вимикаємо
         for (int i = 0; i < weapons.Count; i++)
             if (weapons[i]) weapons[i].gameObject.SetActive(i == idx);
 
@@ -69,17 +85,23 @@ public class WeaponSwitcher : MonoBehaviour
             Current.PlayEquipSound();
         }
 
-        WeaponChanged?.Invoke(Current); // 🔔 важливо для HUD
+        WeaponChanged?.Invoke(Current);
     }
 
     public void SelectNext(bool forward = true)
     {
-        if (weapons.Count == 0) return;
+        if (weapons.Count == 0)
+        {
+            Current = null;
+            WeaponChanged?.Invoke(null);
+            return;
+        }
         int cur = Mathf.Max(0, weapons.IndexOf(Current));
         int next = (cur + (forward ? 1 : -1) + weapons.Count) % weapons.Count;
         SelectIndex(next);
     }
 
+    // ====== ПІКАП ======
     public bool AddWeaponFromPrefab(GameObject weaponPrefab)
     {
         if (!weaponPrefab || !weaponRoot) return false;
@@ -115,16 +137,27 @@ public class WeaponSwitcher : MonoBehaviour
         return true;
     }
 
+    // ====== ДРОП ======
     public void DropCurrent()
     {
         if (!Current) return;
+
         SpawnPickupFor(Current);
         RemoveWeaponInstance(Current);
 
-        if (weapons.Count > 0) SelectIndex(0);
-        else Current = null;
+        if (weapons.Count > 0)
+        {
+            SelectIndex(0);
+        }
+        else
+        {
+            // інвентарь порожній — повідомляємо HUD, щоб очистився
+            Current = null;
+            WeaponChanged?.Invoke(null);
+        }
     }
 
+    // ====== ЮТІЛІТИ ======
     public bool TryGetWeaponOfType<T>(out T result) where T : WeaponBase
     {
         foreach (var w in weapons)
@@ -147,7 +180,6 @@ public class WeaponSwitcher : MonoBehaviour
         return false;
     }
 
-    // ==== helpers ====
     private void RemoveWeaponInstance(WeaponBase wb)
     {
         int idx = weapons.IndexOf(wb);

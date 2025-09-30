@@ -532,6 +532,8 @@ MonoBehaviour:
   weaponPrefab: {fileID: 7675334882938410928}
   damage: 10
   fireRate: 4
+  icon: {fileID: 21300000, guid: 8277f86b8970f4a4397d487ab3ff29ff, type: 3}
+  displayName: M1911
   audioSource: {fileID: 0}
   equipClip: {fileID: 8300000, guid: 445ab3514f6a44a43a422cb9240aed11, type: 3}
   firePoint: {fileID: 2058223809053161601}
