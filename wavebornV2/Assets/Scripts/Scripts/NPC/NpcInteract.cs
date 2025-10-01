@@ -1,69 +1,57 @@
-﻿using UnityEngine;
+﻿// Assets/Scripts/NPC/NpcInteract.cs
+using UnityEngine;
 using TMPro;
 
 [RequireComponent(typeof(Collider))]
 public class NpcInteract : MonoBehaviour
 {
-    [SerializeField] private GameObject interactHint; // можна дати Canvas або сам текст
     [SerializeField] private DialogueUI dialogueUI;
+    [SerializeField] private TextMeshProUGUI interactHint;
+    [SerializeField] private string hintText = "Натисни <b>E</b>, щоб поговорити";
+    [SerializeField] private KeyCode interactKey = KeyCode.E;
 
-    private bool playerInside;
-    private GameObject resolvedHint; // те, що реально будемо вмикати/вимикати
+    private bool _inside;
 
-    void Reset()
+    private void Awake()
     {
-        var c = GetComponent<Collider>();
-        c.isTrigger = true;
+        var col = GetComponent<Collider>();
+        col.isTrigger = true;
+        if (!dialogueUI) dialogueUI = FindObjectOfType<DialogueUI>();
+        SetHint(false);
     }
 
-    void Awake()
-    {
-        // якщо дали Canvas — шукаємо в ньому перший TMP-текст із назвою "InteractHint"
-        resolvedHint = ResolveHint(interactHint);
-        if (!resolvedHint)
-            Debug.LogWarning("[NpcInteract] InteractHint не знайдено. Створи окремий UI-текст і признач у поле.");
-        else
-            resolvedHint.SetActive(false);
-    }
-
-    private GameObject ResolveHint(GameObject go)
-    {
-        if (!go) return null;
-        if (go.GetComponent<Canvas>() != null)
-        {
-            // 1) спробуємо знайти дочірній об’єкт із назвою "InteractHint"
-            var t = go.transform.Find("InteractHint");
-            if (t) return t.gameObject;
-            // 2) або перший TextMeshProUGUI
-            var tmp = go.GetComponentInChildren<TextMeshProUGUI>(true);
-            if (tmp) return tmp.gameObject;
-            return null;
-        }
-        return go;
-    }
-
-    void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
-        playerInside = true;
-        if (resolvedHint) resolvedHint.SetActive(true);
+        _inside = true;
+        if (dialogueUI && !dialogueUI.IsOpen)
+        {
+            if (interactHint) interactHint.text = hintText;
+            SetHint(true);
+        }
     }
 
-    void OnTriggerExit(Collider other)
+    private void OnTriggerExit(Collider other)
     {
         if (!other.CompareTag("Player")) return;
-        playerInside = false;
-        if (resolvedHint) resolvedHint.SetActive(false);
-        dialogueUI?.HideAllImmediate();
+        _inside = false;
+        SetHint(false);
+        // бажаєш – закривай діалог при виході:
+        // if (dialogueUI && dialogueUI.IsOpen) dialogueUI.CloseAll();
     }
 
-    void Update()
+    private void Update()
     {
-        if (!playerInside) return;
-        if (Input.GetKeyDown(KeyCode.E))
+        if (!_inside || !dialogueUI) return;
+        if (Input.GetKeyDown(interactKey))
         {
-            if (resolvedHint) resolvedHint.SetActive(false);
-            dialogueUI?.ShowMenu();
+            dialogueUI.OpenMenu();
+            SetHint(false);
         }
+    }
+
+    private void SetHint(bool on)
+    {
+        if (interactHint) interactHint.gameObject.SetActive(on);
     }
 }

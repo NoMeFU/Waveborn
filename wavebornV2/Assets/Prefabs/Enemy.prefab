@@ -126,6 +126,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHP: 50
+  startMode: 0
+  startHP: 50
+  destroyOnDeath: 1
+  currentHP: 50
 --- !u!54 &7745205356768716047
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -190,7 +194,10 @@ MonoBehaviour:
   damage: 10
   attackCooldown: 0.8
   attackRange: 1.2
-  target: {fileID: 8942123321980415105}
+  target: {fileID: 0}
+  repathInterval: 0.2
+  faceTurnSpeed: 720
+  agentControlsRotation: 1
 --- !u!1 &2058433495508919339
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
@@ -28,9 +29,15 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        // РУХ та ПОВОРОТ — завжди
         HandleMoveCameraRelative();
         HandleAimByMousePosition();
-        HandleFireAndSwitch();
+
+        // СТРІЛЬБА / ПЕРЕМИКАННЯ — тільки якщо не блокує UI
+        bool uiBlocked = InputBlocker.Blocked ||
+                         (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject());
+        if (!uiBlocked)
+            HandleFireAndSwitch();
     }
 
     // ---- MOVE відносно камери ----
@@ -58,14 +65,12 @@ public class PlayerController : MonoBehaviour
     {
         if (!cam) return;
 
-        // позиція гравця на екрані
         Vector3 playerScreen = cam.WorldToScreenPoint(transform.position);
         Vector2 mouse = Input.mousePosition;
         Vector2 delta = new Vector2(mouse.x - playerScreen.x, mouse.y - playerScreen.y);
 
         if (delta.sqrMagnitude < aimDeadPixels * aimDeadPixels) return; // мертва зона
 
-        // переводимо у світову площину XZ
         Vector3 camF = cam.transform.forward; camF.y = 0f; camF.Normalize();
         Vector3 camR = cam.transform.right; camR.y = 0f; camR.Normalize();
 

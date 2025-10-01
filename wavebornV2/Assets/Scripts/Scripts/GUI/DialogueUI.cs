@@ -1,134 +1,130 @@
-﻿using UnityEngine;
+﻿// Assets/Scripts/NPC/DialogueUI.cs
+using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
 public class DialogueUI : MonoBehaviour
 {
-    [Header("Panels (GameObjects)")]
-    [SerializeField] private GameObject menuRoot;      // панель з кнопками
-    [SerializeField] private GameObject dialogueRoot;  // панель з текстом
+    [Header("Panels")]
+    [SerializeField] private GameObject menuRoot;     // панель із кнопками (What/Tasks/Exit)
+    [SerializeField] private GameObject dialogueRoot; // панель з текстом і кнопкою "Далі"
 
     [Header("Menu Buttons")]
-    [SerializeField] private Button whatButton;        // "Що тут відбувається?"
-    [SerializeField] private Button exitButton;        // "Вийти"
+    [SerializeField] private Button whatButton;
+    [SerializeField] private Button exitButton;
 
     [Header("Dialogue View")]
     [SerializeField] private TextMeshProUGUI textField;
-    [SerializeField] private Button nextButton;        // "Далі"
+    [SerializeField] private Button nextButton;
     [SerializeField] private KeyCode advanceKey = KeyCode.Space;
 
     [Header("Data")]
     [SerializeField] private DialogueData whatDialogue;
 
-    private DialogueData current;
-    private int index = -1;
-    private bool isOpen;
+    public bool IsOpen { get; private set; }
 
-    void Awake()
+    private DialogueData _current;
+    private int _index = -1;
+    private bool _pushed;
+
+    private void Awake()
     {
-        HideAllImmediate();
-
-        // автопідписка
+        CloseAll(); // сховати все і зняти блок, якщо був
         if (whatButton) whatButton.onClick.AddListener(OpenWhat);
-        if (exitButton) exitButton.onClick.AddListener(HideAllImmediate);
+        if (exitButton) exitButton.onClick.AddListener(CloseAll);
         if (nextButton) nextButton.onClick.AddListener(Advance);
     }
 
-    void Update()
+    private void Update()
     {
-        if (!isOpen) return;
+        if (!IsOpen) return;
         if (dialogueRoot && dialogueRoot.activeSelf && Input.GetKeyDown(advanceKey))
             Advance();
     }
 
-    // ==== API для NPC ====
-    public void ShowMenu()
+    // ===== API =====
+    public void OpenMenu()
     {
-        isOpen = true;
-        SafeSetActive(menuRoot, true);
-        SafeSetActive(dialogueRoot, false);
+        if (!_pushed) { InputBlocker.Push(); _pushed = true; }
+        IsOpen = true;
+        SafeSet(menuRoot, true);
+        SafeSet(dialogueRoot, false);
         if (textField) textField.gameObject.SetActive(false);
-        Debug.Log("[DialogueUI] ShowMenu()");
     }
 
-    public void HideAllImmediate()
+    public void ShowDialogueText(string message)
     {
-        isOpen = false;
-        SafeSetActive(menuRoot, false);
-        SafeSetActive(dialogueRoot, false);
-        if (textField)
-        {
-            textField.text = "";
-            textField.gameObject.SetActive(false);
-            // на всяк випадок – вмикаємо компонент, якщо хтось вимкнув
-            textField.enabled = true;
-        }
-        current = null;
-        index = -1;
-        Debug.Log("[DialogueUI] HideAllImmediate()");
-    }
+        if (!_pushed) { InputBlocker.Push(); _pushed = true; }
+        IsOpen = true;
 
-    // ==== Кнопка "Що тут відбувається?" ====
-    public void OpenWhat()
-    {
-        if (!whatDialogue) { Debug.LogWarning("[DialogueUI] whatDialogue не призначений!"); return; }
-        if (whatDialogue.Count == 0) { Debug.LogWarning("[DialogueUI] whatDialogue порожній."); return; }
-        StartDialogue(whatDialogue);
-    }
-
-    // ==== Діалог ====
-    private void StartDialogue(DialogueData data)
-    {
-        current = data;
-        index = -1;
-
-        SafeSetActive(menuRoot, false);
-        SafeSetActive(dialogueRoot, true);
-
-        // ⚡️ насильно вмикаємо сам текстовий об'єкт
+        SafeSet(menuRoot, false);
+        SafeSet(dialogueRoot, true);
         if (textField)
         {
             textField.gameObject.SetActive(true);
-            textField.enabled = true; // на випадок, якщо вимкнений компонент
-            // і колір не прозорий
-            var c = textField.color; c.a = 1f; textField.color = c;
+            textField.enabled = true;
+            textField.text = message;
         }
+        if (nextButton) nextButton.gameObject.SetActive(false); // одноразове повідомлення
+    }
 
-        Debug.Log($"[DialogueUI] StartDialogue(): lines={current.Count}, dialogueRoot.active={dialogueRoot.activeSelf}, textActive={textField?.gameObject.activeSelf}");
+    public void CloseAll()
+    {
+        SafeSet(menuRoot, false);
+        SafeSet(dialogueRoot, false);
+        if (textField) { textField.text = ""; textField.gameObject.SetActive(false); }
+        _current = null;
+        _index = -1;
+        IsOpen = false;
+
+        if (_pushed) { InputBlocker.Pop(); _pushed = false; }
+    }
+
+    // ===== Вбудований діалог "Що тут відбувається?" =====
+    private void OpenWhat()
+    {
+        if (whatDialogue == null || whatDialogue.Count == 0) return;
+        StartDialogue(whatDialogue);
+    }
+
+    private void StartDialogue(DialogueData data)
+    {
+        if (!_pushed) { InputBlocker.Push(); _pushed = true; }
+        IsOpen = true;
+
+        _current = data;
+        _index = -1;
+
+        SafeSet(menuRoot, false);
+        SafeSet(dialogueRoot, true);
+        if (textField) { textField.gameObject.SetActive(true); textField.enabled = true; }
+
+        if (nextButton) nextButton.gameObject.SetActive(true);
         Advance();
     }
 
     private void Advance()
     {
-        if (current == null) return;
+        if (_current == null) return;
 
-        index++;
-        if (index >= current.Count)
+        _index++;
+        if (_index >= _current.Count)
         {
-            SafeSetActive(dialogueRoot, false);
+            // закінчили – назад у меню
+            SafeSet(dialogueRoot, false);
             if (textField) textField.gameObject.SetActive(false);
-            SafeSetActive(menuRoot, true);
-            current = null;
-            index = -1;
-            Debug.Log("[DialogueUI] Dialogue finished → back to menu");
+            SafeSet(menuRoot, true);
+            _current = null;
+            _index = -1;
             return;
         }
-
-        if (!textField) { Debug.LogWarning("[DialogueUI] TextField не призначений!"); return; }
-
-        textField.text = current.GetLine(index);
-        Debug.Log($"[DialogueUI] Line {index + 1}/{current.Count}");
+        if (textField) textField.text = _current.GetLine(_index);
     }
 
-    // ніколи не вимикаємо Canvas помилково
-    private void SafeSetActive(GameObject go, bool on)
+    private static void SafeSet(GameObject go, bool on)
     {
         if (!go) return;
-        if (go.GetComponent<Canvas>() != null)
-        {
-            Debug.LogWarning("[DialogueUI] Не вимикай Canvas — признач дочірню панель (MenuRoot/DialogueRoot).", go);
-            return;
-        }
+        if (go.GetComponent<Canvas>()) return; // не вимикати весь Canvas
         go.SetActive(on);
     }
 }
