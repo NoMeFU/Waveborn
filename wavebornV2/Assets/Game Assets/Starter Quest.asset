@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4aa267ad4c2d8b4e9e78421db9b31fc, type: 3}
   m_Name: Starter Quest
   m_EditorClassIdentifier: 
-  questId: kill_rats_1
+  questId: kill_zm_1
   title: "\u041F\u043E\u043B\u044E\u0432\u0430\u043D\u043D\u044F"
   description: "\u0417\u043D\u0438\u0449 5 \u0447\u0435\u0440\u0432\u043E\u043D\u0438\u0445
     \u043A\u0430\u043F\u0441\u0443\u043B"
-  targetEnemyId: red_capsule
+  targetEnemyId: Zombie
   requiredKills: 5
-  rewardText: "+500 exp (\u043F\u0440\u0438\u043A\u043B\u0430\u0434)"
+  rewardText: +10 exp
