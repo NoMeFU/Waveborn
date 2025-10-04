@@ -1,18 +1,31 @@
-// Assets/Scripts/Quests/QuestSO.cs
-using UnityEngine;
+п»їusing UnityEngine;
 
-[CreateAssetMenu(menuName = "Game/Quest")]
+[CreateAssetMenu(menuName = "Quests/Quest")]
 public class QuestSO : ScriptableObject
 {
-    [Header("ID & Text")]
-    public string questId = "kill_zombies_5";
-    public string title = "Очищення периметра";
-    [TextArea] public string description = "Знищ 5 звичайних зомбі поруч із базою.";
+    [Header("Quest Info")]
+    [SerializeField] private string _questId;
+    [SerializeField] private string _title;
+    [SerializeField] private string _description;
+    [SerializeField] private int _targetAmount;
+    [SerializeField] private bool _repeatable;
+    [SerializeField] private string _rewardText;
 
-    [Header("Objective")]
-    public string targetEnemyId = "zombie_basic";
-    public int requiredKills = 5;
+    public string questId => _questId;
+    public string ID => _questId;
 
-    [Header("Reward (text)")]
-    public string rewardText = "+500 XP, +50 кредитів";
+    public string title => _title;
+    public string Title => _title;
+
+    public string description => _description;
+    public string Description => _description;
+
+    public int requiredAmount => _targetAmount;
+    public int RequiredAmount => _targetAmount;
+    public int TargetAmount => _targetAmount;
+
+    public bool repeatable => _repeatable;
+
+    public string rewardText => _rewardText;
+    public string Reward => _rewardText;
 }

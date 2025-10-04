@@ -1,3 +1,4 @@
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -5,23 +6,26 @@ using UnityEngine.UI;
 
 public class QuestGiver : MonoBehaviour
 {
-    [Header("Refs")]
+    [Header("References")]
     [SerializeField] private DialogueUI dialogueUI;
     [SerializeField] private Button btnTasks;
-    [SerializeField] private TextMeshProUGUI tasksStatusText; // �������
+    [SerializeField] private TextMeshProUGUI tasksStatusText;
 
-    [Header("Quests Offered")]
+    [Header("Available Quests")]
     [SerializeField] private List<QuestSO> quests = new();
 
     private void Awake()
     {
-        if (!dialogueUI) dialogueUI = FindObjectOfType<DialogueUI>();
-        if (btnTasks) btnTasks.onClick.AddListener(OnTasksPressed);
+        if (!dialogueUI)
+            dialogueUI = FindObjectOfType<DialogueUI>();
+
+        if (btnTasks)
+            btnTasks.onClick.AddListener(OnTasksPressed);
     }
 
     private void OnEnable()
     {
-        if (QuestManager.Instance)
+        if (QuestManager.Instance != null)
         {
             QuestManager.Instance.OnQuestAccepted += OnQuestAccepted;
             QuestManager.Instance.OnQuestProgress += OnQuestProgress;
@@ -31,7 +35,7 @@ public class QuestGiver : MonoBehaviour
 
     private void OnDisable()
     {
-        if (QuestManager.Instance)
+        if (QuestManager.Instance != null)
         {
             QuestManager.Instance.OnQuestAccepted -= OnQuestAccepted;
             QuestManager.Instance.OnQuestProgress -= OnQuestProgress;
@@ -39,56 +43,94 @@ public class QuestGiver : MonoBehaviour
         }
     }
 
-    public void OnTasksPressed()
+    private void OnTasksPressed()
     {
-        if (!dialogueUI) return;
+        if (!dialogueUI)
+            return;
 
-        // ��� �������� � ������ ������ ����� � ������
-        var q = quests.Count > 0 ? quests[0] : null;
-        if (q == null) { dialogueUI.ShowDialogueText("����� ����� ����."); StartCoroutine(CloseSoon()); return; }
+        QuestSO quest = quests.Count > 0 ? quests[0] : null;
+
+        if (quest == null)
+        {
+            dialogueUI.ShowDialogueText("Наразі задач немає.");
+            StartCoroutine(CloseSoon());
+            return;
+        }
 
         var qm = QuestManager.Instance;
-        if (!qm.HasActive(q.questId) && !qm.IsCompleted(q.questId))
+        if (qm == null)
         {
-            qm.Accept(q);
-            dialogueUI.ShowDialogueText($"��������: <b>{q.title}</b>\n{q.description}");
-            StartCoroutine(CloseSoon());
+            dialogueUI.ShowDialogueText("Система квестів не знайдена.");
+            return;
         }
-        else
+
+        // Якщо квест вже активний
+        if (qm.HasActive(quest.questId))
         {
-            var st = qm.GetState(q.questId);
-            if (st != null && !st.Completed)
+            var state = qm.GetState(quest.questId);
+            dialogueUI.ShowDialogueText(
+                $"Квест вже виконується: <b>{quest.title}</b>\n" +
+                $"{quest.description}\n" +
+                $"Прогрес: {state.Current}/{state.Required}\n" +
+                $"Нагорода: {quest.rewardText}"
+            );
+            StartCoroutine(CloseSoon());
+            return;
+        }
+
+        // Якщо квест завершений
+        if (qm.IsCompleted(quest.questId))
+        {
+            if (quest.repeatable)
             {
-                dialogueUI.ShowDialogueText($"{q.title}\n�������: {st.Current}/{st.Required}");
+                qm.Accept(quest);
+                dialogueUI.ShowDialogueText(
+                    $"Ви взяли повторно квест: <b>{quest.title}</b>\n" +
+                    $"Ціль: {quest.description} (0/{quest.requiredAmount})\n" +
+                    $"Нагорода: {quest.rewardText}"
+                );
             }
             else
             {
-                dialogueUI.ShowDialogueText($"����� ���������: <b>{q.title}</b>\n��������: {q.rewardText}");
+                dialogueUI.ShowDialogueText($"Цей квест вже виконано і він не повторюється.");
             }
+
             StartCoroutine(CloseSoon());
+            return;
         }
+
+        // Новий квест
+        qm.Accept(quest);
+        dialogueUI.ShowDialogueText(
+            $"Прийнято квест: <b>{quest.title}</b>\n" +
+            $"Ціль: {quest.description} (0/{quest.requiredAmount})\n" +
+            $"Нагорода: {quest.rewardText}"
+        );
+        StartCoroutine(CloseSoon());
     }
 
-    private System.Collections.IEnumerator CloseSoon()
+    private IEnumerator CloseSoon()
     {
         yield return new WaitForSeconds(1.0f);
-        if (dialogueUI && dialogueUI.IsOpen) dialogueUI.CloseAll();
+        if (dialogueUI != null && dialogueUI.IsOpen)
+            dialogueUI.CloseAll();
     }
 
-    private void OnQuestAccepted(QuestState st)
+    private void OnQuestAccepted(QuestState state)
     {
-        if (tasksStatusText) tasksStatusText.text = $"��������: {st.Data.title}";
+        if (tasksStatusText != null)
+            tasksStatusText.text = $"Прийнято: {state.Data.title}";
     }
 
-    private void OnQuestProgress(QuestState st)
+    private void OnQuestProgress(QuestState state)
     {
-        if (tasksStatusText && !st.Completed)
-            tasksStatusText.text = $"{st.Data.title}: {st.Current}/{st.Required}";
+        if (tasksStatusText != null && !state.Completed)
+            tasksStatusText.text = $"{state.Data.title}: {state.Current}/{state.Required}";
     }
 
-    private void OnQuestCompleted(QuestState st)
+    private void OnQuestCompleted(QuestState state)
     {
-        if (tasksStatusText)
-            tasksStatusText.text = $"���������: {st.Data.title}\n{st.Data.rewardText}";
+        if (tasksStatusText != null)
+            tasksStatusText.text = $"Завершено: {state.Data.title} → {state.Data.rewardText}";
     }
 }

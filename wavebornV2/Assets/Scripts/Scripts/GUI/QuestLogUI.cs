@@ -1,88 +1,80 @@
-// Assets/Scripts/Quests/UI/QuestLogUI.cs
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
+[RequireComponent(typeof(CanvasGroup))]
 public class QuestLogUI : MonoBehaviour
 {
     [Header("Panel")]
-    [SerializeField] private CanvasGroup canvasGroup;
+    [SerializeField] private CanvasGroup canvasGroup;   // CanvasGroup на QuestLogPanel
     [SerializeField] private KeyCode toggleKey = KeyCode.Tab;
     [SerializeField] private float fadeSpeed = 12f;
 
     [Header("List")]
-    [SerializeField] private Transform content;      // ScrollView/Viewport/Content
-    [SerializeField] private QuestItemUI itemPrefab; // ������ ��������
+    [SerializeField] private RectTransform content;     // Scroll View → Viewport → Content
+    [SerializeField] private QuestItemUI itemPrefab;    // Префаб елемента
 
-    private readonly Dictionary<string, QuestItemUI> items = new();
-    private bool visible;
+    private bool _visible;
+    private readonly Dictionary<string, QuestItemUI> _items = new();
+
+    private void Reset()
+    {
+        canvasGroup = GetComponent<CanvasGroup>();
+    }
 
     private void Awake()
     {
         if (!canvasGroup) canvasGroup = GetComponent<CanvasGroup>();
-        SetVisible(false, instant: true);
-    }
-
-    private void OnEnable()
-    {
-        if (QuestManager.Instance)
-        {
-            QuestManager.Instance.OnQuestAccepted += OnQuestAccepted;
-            QuestManager.Instance.OnQuestProgress += OnQuestProgress;
-            QuestManager.Instance.OnQuestCompleted += OnQuestCompleted;
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (QuestManager.Instance)
-        {
-            QuestManager.Instance.OnQuestAccepted -= OnQuestAccepted;
-            QuestManager.Instance.OnQuestProgress -= OnQuestProgress;
-            QuestManager.Instance.OnQuestCompleted -= OnQuestCompleted;
-        }
+        SetVisible(false, true);
     }
 
     private void Update()
     {
         if (Input.GetKeyDown(toggleKey))
-            SetVisible(!visible);
+            SetVisible(!_visible);
 
-        // ������� ����
-        float target = visible ? 1f : 0f;
-        canvasGroup.alpha = Mathf.MoveTowards(canvasGroup.alpha, target, fadeSpeed * Time.deltaTime);
-        canvasGroup.blocksRaycasts = visible;
-        canvasGroup.interactable = visible;
+        float targetA = _visible ? 1f : 0f;
+        if (!Mathf.Approximately(canvasGroup.alpha, targetA))
+        {
+            canvasGroup.alpha = Mathf.MoveTowards(
+                canvasGroup.alpha, targetA, fadeSpeed * Time.unscaledDeltaTime);
+            bool on = canvasGroup.alpha > 0.001f;
+            canvasGroup.interactable = on;
+            canvasGroup.blocksRaycasts = on;
+        }
     }
 
     private void SetVisible(bool on, bool instant = false)
     {
-        visible = on;
-        if (!instant) return;
-
-        canvasGroup.alpha = on ? 1f : 0f;
-        canvasGroup.blocksRaycasts = on;
-        canvasGroup.interactable = on;
+        _visible = on;
+        if (instant)
+        {
+            canvasGroup.alpha = on ? 1f : 0f;
+            canvasGroup.interactable = on;
+            canvasGroup.blocksRaycasts = on;
+        }
     }
 
-    // ==== QuestManager events ====
-    private void OnQuestAccepted(QuestState st) => AddOrUpdateItem(st);
-    private void OnQuestProgress(QuestState st) => AddOrUpdateItem(st);
-    private void OnQuestCompleted(QuestState st) => AddOrUpdateItem(st);
-
-    private void AddOrUpdateItem(QuestState st)
+    /// <summary>Додати або оновити квест.</summary>
+    public void AddOrUpdate(string id, string title, string description, int current, int max)
     {
-        if (!st?.Data) return;
+        if (string.IsNullOrEmpty(id) || !itemPrefab || !content) return;
 
-        if (!items.TryGetValue(st.Id, out var ui))
+        if (!_items.TryGetValue(id, out var ui))
         {
             ui = Instantiate(itemPrefab, content);
-            ui.Bind(st);
-            items[st.Id] = ui;
+            _items[id] = ui;
         }
-        else
+
+        ui.Set(title, description, current, max); // ✅ викликаємо Set, а не Bind
+    }
+
+    /// <summary>Прибрати квест із журналу.</summary>
+    public void Remove(string id)
+    {
+        if (_items.TryGetValue(id, out var ui))
         {
-            ui.Bind(st);
+            Destroy(ui.gameObject);
+            _items.Remove(id);
         }
     }
 }

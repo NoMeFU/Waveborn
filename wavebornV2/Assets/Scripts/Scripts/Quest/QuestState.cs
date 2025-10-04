@@ -1,12 +1,26 @@
-// Assets/Scripts/Quests/QuestState.cs
+[System.Serializable]
 public class QuestState
 {
-    public readonly QuestSO Data;
+    public QuestSO Data;
     public int Current;
-    public bool Completed;
+    public int Required => Data.TargetAmount;
+    public bool Completed => Current >= Required;
 
-    public QuestState(QuestSO data) { Data = data; Current = 0; Completed = false; }
+    public int CurrentProgress => Current;
 
-    public int Required => Data.requiredKills;
-    public string Id => Data.questId;
+    public QuestSO Quest => Data;
+
+    public QuestState(QuestSO data)
+    {
+        Data = data;
+        Current = 0;
+    }
+
+    public void AddProgress(int amount)
+    {
+        if (Completed) return;
+        Current += amount;
+        if (Current > Required)
+            Current = Required;
+    }
 }

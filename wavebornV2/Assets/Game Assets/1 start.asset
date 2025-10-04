@@ -10,12 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c4aa267ad4c2d8b4e9e78421db9b31fc, type: 3}
-  m_Name: Starter Quest
+  m_Name: 1 start
   m_EditorClassIdentifier: 
-  questId: kill_zm_1
-  title: "\u041F\u043E\u043B\u044E\u0432\u0430\u043D\u043D\u044F"
-  description: "\u0417\u043D\u0438\u0449 5 \u0447\u0435\u0440\u0432\u043E\u043D\u0438\u0445
-    \u043A\u0430\u043F\u0441\u0443\u043B"
-  targetEnemyId: Zombie
-  requiredKills: 5
-  rewardText: +10 exp
+  _questId: 5_kills
+  _title: "\u0417\u043D\u0438\u0449\u0438\u0442\u0438 \u0432\u043E\u0440\u043E\u0433\u0430"
+  _description: "\u0417\u043D\u0435\u0448\u043A\u043E\u0434\u044C \u0432\u043E\u0440\u043E\u0433\u0456\u0432"
+  _targetAmount: 5
+  _repeatable: 0
+  _rewardText: 100 xp
