@@ -19,6 +19,6 @@ public class QuestUI : MonoBehaviour
 
         questText.text =
             $"{questState.Data.Title}\n<size=80%><color=#CCCCCC>{questState.Data.Description}</color></size>\n" +
-            $"<b>Progress:</b> {questState.CurrentProgress}/{questState.Data.TargetAmount}";
+            $"<b>Прогрес:</b> {questState.CurrentProgress}/{questState.Data.TargetAmount}";
     }
 }

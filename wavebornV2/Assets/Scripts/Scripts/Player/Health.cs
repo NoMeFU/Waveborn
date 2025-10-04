@@ -149,17 +149,5 @@ public class Health : MonoBehaviour
     }
 
     // ================== DEV-ØÎÐÒÊÀÒÈ (íå îáîâ’ÿçêîâî) ==================
-#if UNITY_EDITOR
-    [ContextMenu("Dev/Damage 10")]
-    private void DevDamage10() => TakeDamage(10f);
 
-    [ContextMenu("Dev/Heal 10")]
-    private void DevHeal10() => Heal(10f);
-
-    [ContextMenu("Dev/Full Heal")]
-    private void DevFullHeal() => SetCurrentHP(maxHP);
-
-    [ContextMenu("Dev/Kill")]
-    private void DevKill() => Kill();
-#endif
 }

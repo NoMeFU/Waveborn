@@ -65,9 +65,31 @@ public class QuestManager : MonoBehaviour
 
         completedQuests.Add(questId);
         activeQuests.Remove(questId);
+
         OnQuestCompleted?.Invoke(state);
+
+        if (PlayerExperienceInstance != null)
+        {
+            PlayerExperienceInstance.AddXP(state.Data.XPReward);
+            Debug.Log($"🟢 Гравець отримав {state.Data.XPReward} XP за квест {state.Data.Title}");
+        }
+
         Debug.Log($"✅ Квест завершено: {state.Data.title}");
     }
 
+    private PlayerExperience PlayerExperienceInstance
+    {
+        get
+        {
+            if (_playerXP == null)
+                _playerXP = FindObjectOfType<PlayerExperience>();
+            return _playerXP;
+        }
+    }
+    private PlayerExperience _playerXP;
+
+
     public List<QuestState> GetAllStates() => activeQuests.Values.ToList();
+
+
 }
