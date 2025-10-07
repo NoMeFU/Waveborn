@@ -285,8 +285,8 @@ MonoBehaviour:
   displayName: Granade
   audioSource: {fileID: 0}
   equipClip: {fileID: 0}
-  grenadePrefab: {fileID: 0}
-  throwPoint: {fileID: 0}
+  grenadePrefab: {fileID: 1698056052845220, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
+  throwPoint: {fileID: 4379243761268538}
   throwForce: 12
   maxGrenades: 3
   startGrenades: 3

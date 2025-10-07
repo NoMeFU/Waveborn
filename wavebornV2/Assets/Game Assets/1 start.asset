@@ -17,4 +17,5 @@ MonoBehaviour:
   _description: "\u0417\u043D\u0435\u0448\u043A\u043E\u0434\u044C \u0432\u043E\u0440\u043E\u0433\u0456\u0432"
   _targetAmount: 5
   _repeatable: 0
-  _rewardText: 100 xp
+  _rewardText: 50 xp
+  _xpReward: 50

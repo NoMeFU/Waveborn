@@ -3,8 +3,8 @@ using UnityEngine;
 public class PickupCoin : MonoBehaviour
 {
     [Header("Coin Settings")]
-    [SerializeField] private int coinValue = 1;        // скільки монет додає
-    [SerializeField] private AudioClip pickupSound;    // звук при зборі
+    [SerializeField] private int coinValue = 1;        
+    [SerializeField] private AudioClip pickupSound;    
     [SerializeField] private float destroyDelay = 0.1f;
 
     private AudioSource audioSource;

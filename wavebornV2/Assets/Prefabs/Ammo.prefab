@@ -134,6 +134,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9508219a5907454c875750222ba7293, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damage: 5
+  damage: 20
   targetTag: Enemy
   cooldown: 0.5

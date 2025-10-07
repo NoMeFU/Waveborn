@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 8967665848984539760}
   - component: {fileID: 4156012081573141072}
   - component: {fileID: -6701604223496676439}
-  - component: {fileID: 875795476415351273}
+  - component: {fileID: 1586454674833515417}
   m_Layer: 7
   m_Name: Enemy
   m_TagString: Untagged
@@ -127,11 +127,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93459c6ed815b3b4887ed7e522f5baa0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHP: 50
+  maxHP: 100
   startMode: 0
-  startHP: 50
+  startHP: 1
   destroyOnDeath: 1
-  currentHP: 50
+  currentHP: 100
 --- !u!54 &7745205356768716047
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -213,7 +213,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   questId: 5_kills
---- !u!114 &875795476415351273
+--- !u!114 &1586454674833515417
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -222,11 +222,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 1490747545052182899}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16e4d6790391ef04fbea814c56fe1c02, type: 3}
+  m_Script: {fileID: 11500000, guid: 58b4e097a473c6c4ba96081555a67ebc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  lootTable:
+  - itemPrefab: {fileID: 0}
+    dropChance: 0
+    minAmount: 0
+    maxAmount: 0
+  minCoins: 1
+  maxCoins: 1
+  coinPrefab: {fileID: 8381411716297003114, guid: c5427a00496fcc54ead12f3ce698f0ef, type: 3}
   xpReward: 50
-  isEnemy: 1
 --- !u!1 &2058433495508919339
 GameObject:
   m_ObjectHideFlags: 0

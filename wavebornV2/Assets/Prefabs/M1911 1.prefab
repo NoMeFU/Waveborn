@@ -530,7 +530,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   weaponPrefab: {fileID: 7675334882938410928}
-  damage: 10
+  damage: 20
   fireRate: 4
   icon: {fileID: 21300000, guid: 8277f86b8970f4a4397d487ab3ff29ff, type: 3}
   displayName: M1911
