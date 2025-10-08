@@ -4,30 +4,30 @@ using System;
 public abstract class WeaponBase : MonoBehaviour
 {
     [Header("Prefab")]
-    [SerializeField] private GameObject weaponPrefab;   // оригінальний префаб (для дропа/пікапа)
+    [SerializeField] private GameObject weaponPrefab;
 
     [Header("Stats")]
     [SerializeField] protected float damage = 10f;
-    [SerializeField] protected float fireRate = 4f;     // атак/сек
+    [SerializeField] protected float fireRate = 4f; // атак/сек
     private float cooldown;
     public float CooldownRemaining => cooldown;
 
     [Header("UI")]
-    [SerializeField] private Sprite icon;               // іконка для HUD
+    [SerializeField] private Sprite icon;
     [SerializeField] private string displayName = "Weapon";
 
     [Header("Audio")]
-    [SerializeField] protected AudioSource audioSource; // не дублювати у нащадках
+    [SerializeField] protected AudioSource audioSource;
     [SerializeField] private AudioClip equipClip;
-
-    // ====== API для HUD/зовнішніх систем ======
-    public Sprite Icon => icon;
-    public virtual string DisplayName => string.IsNullOrEmpty(displayName) ? gameObject.name : displayName;
-    public GameObject WeaponPrefab => weaponPrefab;
+    [SerializeField] protected AudioClip fireClip; 
 
     public event Action<WeaponBase> Equipped;
     public event Action<WeaponBase> Unequipped;
     public event Action<WeaponBase> Attacked;
+
+    public Sprite Icon => icon;
+    public virtual string DisplayName => string.IsNullOrEmpty(displayName) ? gameObject.name : displayName;
+    public GameObject WeaponPrefab => weaponPrefab;
 
     protected virtual void Awake()
     {
@@ -39,13 +39,8 @@ public abstract class WeaponBase : MonoBehaviour
         if (cooldown > 0f) cooldown -= Time.deltaTime;
     }
 
-    /// <summary>Перевірка, чи можемо атакувати прямо зараз.</summary>
-    protected virtual bool CanAttack()
-    {
-        return cooldown <= 0f;
-    }
+    protected virtual bool CanAttack() => cooldown <= 0f;
 
-    /// <summary>Спроба атакувати. Повертає true, якщо атака відбулась.</summary>
     public bool TryAttack()
     {
         if (!CanAttack()) return false;
@@ -53,13 +48,17 @@ public abstract class WeaponBase : MonoBehaviour
         cooldown = 1f / Mathf.Max(0.01f, fireRate);
         OnAttack();
         Attacked?.Invoke(this);
+
+        PlayFireSound();
+        AnimFire();
+
         return true;
     }
 
-    /// <summary>Власне атака (постріл/удар). Реалізують нащадки.</summary>
     protected abstract void OnAttack();
 
-    /// <summary>Відтворити звук екіпування (викликати з OnEquip або WeaponSwitcher).</summary>
+    public virtual void AnimFire() { }
+
     public void PlayEquipSound()
     {
         if (equipClip)
@@ -69,23 +68,28 @@ public abstract class WeaponBase : MonoBehaviour
         }
     }
 
-    /// <summary>WeaponSwitcher повідомляє, який це був префаб (для дропа).</summary>
+    protected void PlayFireSound()
+    {
+        if (fireClip)
+        {
+            if (audioSource) audioSource.PlayOneShot(fireClip);
+            else AudioSource.PlayClipAtPoint(fireClip, transform.position);
+        }
+    }
+
     public void SetPrefabReference(GameObject prefab)
     {
         if (prefab) weaponPrefab = prefab;
     }
 
-    // ====== Хуки для свічера ======
     public virtual void OnEquip()
     {
         Equipped?.Invoke(this);
         PlayEquipSound();
-        // сюди ж можна додати вмикання прицілу, накладення анімацій тощо
     }
 
     public virtual void OnUnequip()
     {
         Unequipped?.Invoke(this);
-        // сюди — зняття бафів/ефектів
     }
 }

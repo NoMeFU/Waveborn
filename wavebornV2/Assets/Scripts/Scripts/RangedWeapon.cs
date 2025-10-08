@@ -10,14 +10,10 @@ public class RangedWeapon : WeaponBase
     [SerializeField] private float spreadDegrees = 0f;
     [SerializeField] private LayerMask hitMask;
 
-    [Header("Audio Clips")]
-    [SerializeField] private AudioClip fireClip;
-
     protected override void OnAttack()
     {
         if (!firePoint || !projectilePrefab) return;
 
-        if (fireClip && audioSource) audioSource.PlayOneShot(fireClip);
 
         int count = Mathf.Max(1, pellets);
         for (int i = 0; i < count; i++)
@@ -33,5 +29,10 @@ public class RangedWeapon : WeaponBase
             var p = Instantiate(projectilePrefab, firePoint.position, rot);
             p.Init(damage, rot * Vector3.forward, projectileSpeed, hitMask);
         }
+    }
+
+    public override void AnimFire()
+    {
+    
     }
 }
