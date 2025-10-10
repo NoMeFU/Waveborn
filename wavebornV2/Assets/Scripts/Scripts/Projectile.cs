@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// Projectile.cs
+using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
@@ -27,7 +28,6 @@ public class Projectile : MonoBehaviour
     private void Update()
     {
         transform.position += dir * speed * Time.deltaTime;
-
         life -= Time.deltaTime;
         if (life <= 0f) Destroy(gameObject);
     }
@@ -35,7 +35,6 @@ public class Projectile : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (((1 << other.gameObject.layer) & hitMask) == 0) return;
-
         if (other.TryGetComponent<Health>(out var hp))
         {
             hp.TakeDamage(damage);

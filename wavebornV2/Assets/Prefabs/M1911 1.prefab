@@ -387,13 +387,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5651210211754231426}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -1, z: 0, w: 0}
-  m_LocalPosition: {x: -0.0074, y: 0.022, z: -0.2088}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.0074, y: 0.0423, z: 0.183}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8400492427659931496}
-  m_LocalEulerAnglesHint: {x: 0, y: -180, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6855946934633491681
 GameObject:
   m_ObjectHideFlags: 0
@@ -420,8 +420,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6855946934633491681}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.0014037779, y: 0.0000000032067262, z: -0.053769693}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: -0.0014037779, y: 0.0243, z: 0.0247}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -430,7 +430,7 @@ Transform:
   - {fileID: 2443064197750274706}
   - {fileID: 3364386494575518166}
   m_Father: {fileID: 8400492427659931496}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!33 &7125613638088330624
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -530,12 +530,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   weaponPrefab: {fileID: 7675334882938410928}
+  weaponType: 1
   damage: 20
   fireRate: 4
   icon: {fileID: 21300000, guid: 8277f86b8970f4a4397d487ab3ff29ff, type: 3}
   displayName: M1911
   audioSource: {fileID: 0}
   equipClip: {fileID: 8300000, guid: 445ab3514f6a44a43a422cb9240aed11, type: 3}
+  fireClip: {fileID: 8300000, guid: 0ab847fe3d613c94d8967b356c7916ac, type: 3}
   firePoint: {fileID: 2058223809053161601}
   projectilePrefab: {fileID: 7134127699875090513, guid: 0dbf0cb7942964f408cb0a710abeeb01, type: 3}
   projectileSpeed: 28
@@ -544,7 +546,6 @@ MonoBehaviour:
   hitMask:
     serializedVersion: 2
     m_Bits: 128
-  fireClip: {fileID: 8300000, guid: 0ab847fe3d613c94d8967b356c7916ac, type: 3}
 --- !u!82 &-1164675637281106872
 AudioSource:
   m_ObjectHideFlags: 0

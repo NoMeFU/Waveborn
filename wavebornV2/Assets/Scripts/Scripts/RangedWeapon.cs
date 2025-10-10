@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// RangedWeapon.cs
+using UnityEngine;
 
 public class RangedWeapon : WeaponBase
 {
@@ -13,8 +14,6 @@ public class RangedWeapon : WeaponBase
     protected override void OnAttack()
     {
         if (!firePoint || !projectilePrefab) return;
-
-
         int count = Mathf.Max(1, pellets);
         for (int i = 0; i < count; i++)
         {
@@ -25,14 +24,8 @@ public class RangedWeapon : WeaponBase
                 float pitch = Random.Range(-spreadDegrees * 0.25f, spreadDegrees * 0.25f);
                 rot = Quaternion.Euler(firePoint.eulerAngles + new Vector3(pitch, yaw, 0f));
             }
-
             var p = Instantiate(projectilePrefab, firePoint.position, rot);
             p.Init(damage, rot * Vector3.forward, projectileSpeed, hitMask);
         }
-    }
-
-    public override void AnimFire()
-    {
-    
     }
 }

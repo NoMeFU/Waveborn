@@ -111,7 +111,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1698056052845220}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.005644048, z: -0, w: -0.9999841}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.0024395944, y: 0, z: -0.009784339}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -119,7 +119,7 @@ Transform:
   - {fileID: 4803080829805316}
   - {fileID: 7139854176349484601}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 360.647, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &33316380303130376
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -285,6 +285,7 @@ MonoBehaviour:
   displayName: Granade
   audioSource: {fileID: 0}
   equipClip: {fileID: 0}
+  fireClip: {fileID: 0}
   grenadePrefab: {fileID: 1698056052845220, guid: 5a2bf64643e1fb0439ea39c0fc9b00ff, type: 3}
   throwPoint: {fileID: 4379243761268538}
   throwForce: 12

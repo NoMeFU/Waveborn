@@ -1,15 +1,25 @@
-﻿using UnityEngine;
-using System;
+﻿using System;
+using UnityEngine;
+
+public enum WeaponType
+{
+    None = 0,
+    Pistol = 1,
+    Rifle = 2,
+    Sword = 3
+}
 
 public abstract class WeaponBase : MonoBehaviour
 {
     [Header("Prefab")]
     [SerializeField] private GameObject weaponPrefab;
 
-    [Header("Stats")]
+    [Header("Type & Stats")]
+    [SerializeField] private WeaponType weaponType = WeaponType.None;
     [SerializeField] protected float damage = 10f;
-    [SerializeField] protected float fireRate = 4f; // атак/сек
+    [SerializeField] protected float fireRate = 4f;
     private float cooldown;
+
     public float CooldownRemaining => cooldown;
 
     [Header("UI")]
@@ -19,7 +29,7 @@ public abstract class WeaponBase : MonoBehaviour
     [Header("Audio")]
     [SerializeField] protected AudioSource audioSource;
     [SerializeField] private AudioClip equipClip;
-    [SerializeField] protected AudioClip fireClip; 
+    [SerializeField] protected AudioClip fireClip;
 
     public event Action<WeaponBase> Equipped;
     public event Action<WeaponBase> Unequipped;
@@ -28,6 +38,7 @@ public abstract class WeaponBase : MonoBehaviour
     public Sprite Icon => icon;
     public virtual string DisplayName => string.IsNullOrEmpty(displayName) ? gameObject.name : displayName;
     public GameObject WeaponPrefab => weaponPrefab;
+    public WeaponType Type => weaponType;
 
     protected virtual void Awake()
     {
@@ -48,10 +59,8 @@ public abstract class WeaponBase : MonoBehaviour
         cooldown = 1f / Mathf.Max(0.01f, fireRate);
         OnAttack();
         Attacked?.Invoke(this);
-
         PlayFireSound();
         AnimFire();
-
         return true;
     }
 

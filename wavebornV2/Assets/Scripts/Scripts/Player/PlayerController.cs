@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Move Settings")]
+    [Header("Movement")]
     [SerializeField] private float moveSpeed = 7f;
     [SerializeField] private float gravity = 20f;
 
@@ -17,22 +17,17 @@ public class PlayerController : MonoBehaviour
     [Header("Weapons")]
     [SerializeField] private WeaponSwitcher weaponSwitcher;
 
-    [Header("Animation")]
-    [SerializeField] private Animator animator;
-    [SerializeField] private string forwardParam = "Forward";
-    [SerializeField] private string rightParam = "Right";
-    [SerializeField] private string fireTrigger = "Fire";
-
     private CharacterController cc;
     private float verticalVel;
     private Vector3 moveDir;
+    private float turnInput;
+    private bool isShooting;
 
     private void Awake()
     {
         cc = GetComponent<CharacterController>();
         if (!cam) cam = Camera.main;
         if (!weaponSwitcher) weaponSwitcher = GetComponentInChildren<WeaponSwitcher>();
-        if (!animator) animator = GetComponentInChildren<Animator>();
     }
 
     private void Update()
@@ -40,9 +35,10 @@ public class PlayerController : MonoBehaviour
         HandleMovement();
         HandleRotationByMouse();
         HandleFireAndSwitch();
-        UpdateAnimator();
+        //Debug.Log($"PlayerController: Speed={GetSpeed():F2}, LocalMove={GetLocalMove()}, IsShooting={IsShooting}");
     }
 
+    // ===== РУХ =====
     private void HandleMovement()
     {
         float h = Input.GetAxisRaw("Horizontal");
@@ -68,6 +64,7 @@ public class PlayerController : MonoBehaviour
         cc.Move(velocity * Time.deltaTime);
     }
 
+    // ===== ПОВОРОТ =====
     private void HandleRotationByMouse()
     {
         if (!cam) return;
@@ -76,7 +73,11 @@ public class PlayerController : MonoBehaviour
         Vector2 mouse = Input.mousePosition;
         Vector2 delta = new Vector2(mouse.x - playerScreen.x, mouse.y - playerScreen.y);
 
-        if (delta.sqrMagnitude < aimDeadPixels * aimDeadPixels) return;
+        if (delta.sqrMagnitude < aimDeadPixels * aimDeadPixels)
+        {
+            turnInput = 0f;
+            return;
+        }
 
         Vector3 camForward = cam.transform.forward;
         camForward.y = 0f;
@@ -87,7 +88,11 @@ public class PlayerController : MonoBehaviour
         camRight.Normalize();
 
         Vector3 worldDir = camRight * delta.x + camForward * delta.y;
-        if (worldDir.sqrMagnitude < 0.001f) return;
+        if (worldDir.sqrMagnitude < 0.001f)
+        {
+            turnInput = 0f;
+            return;
+        }
 
         Quaternion targetRot = Quaternion.LookRotation(worldDir, Vector3.up);
 
@@ -95,49 +100,48 @@ public class PlayerController : MonoBehaviour
             transform.rotation = targetRot;
         else
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, turnSpeedDeg * Time.deltaTime);
+
+        turnInput = Mathf.Clamp(delta.x / Screen.width * 10f, -1f, 1f);
     }
 
+    // ===== ВОГОНЬ І ЗБРОЯ =====
     private void HandleFireAndSwitch()
     {
         bool uiBlocked = InputBlocker.Blocked ||
                          (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject());
-
         if (uiBlocked) return;
 
         if (Input.GetKeyDown(KeyCode.Alpha1)) weaponSwitcher?.SelectIndex(0);
         if (Input.GetKeyDown(KeyCode.Alpha2)) weaponSwitcher?.SelectIndex(1);
+        if (Input.GetKeyDown(KeyCode.Alpha3)) weaponSwitcher?.SelectIndex(2);
         if (Input.mouseScrollDelta.y != 0) weaponSwitcher?.SelectNext(Input.mouseScrollDelta.y > 0);
 
         if (Input.GetMouseButtonDown(0))
         {
-            var w = weaponSwitcher?.Current;
-            if (w != null)
+            var weapon = weaponSwitcher?.Current;
+            if (weapon != null && weapon.TryAttack())
             {
-                bool ok = w.TryAttack();
-                if (ok)
-                    animator?.SetTrigger(fireTrigger);
+                isShooting = true;
             }
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            isShooting = false;
         }
     }
 
-    private void UpdateAnimator()
+    // ===== API ДЛЯ АНІМАТОРА =====
+    public Vector3 GetLocalMove()
     {
-        if (!animator) return;
-
-        // швидкість руху (для переходу між idle/run)
-        float speed = new Vector2(moveDir.x, moveDir.z).magnitude;
-
-        // локальний напрям руху відносно гравця
-        Vector3 localDir = transform.InverseTransformDirection(moveDir);
-
-        animator.SetFloat("Speed", speed, 0.1f, Time.deltaTime);
-        animator.SetFloat("Forward", localDir.z, 0.1f, Time.deltaTime);
-        animator.SetFloat("Right", localDir.x, 0.1f, Time.deltaTime);
+        // Повертає швидкість у локальних координатах
+        return transform.InverseTransformDirection(moveDir * moveSpeed);
     }
 
-
-    public void OnAnimFireEvent()
+    public float GetSpeed()
     {
-        weaponSwitcher?.Current?.AnimFire();
+        return moveDir.magnitude * moveSpeed;
     }
+
+    public bool IsShooting => isShooting;
+    public float GetTurnInput() => turnInput;
 }

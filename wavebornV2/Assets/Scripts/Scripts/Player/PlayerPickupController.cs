@@ -16,13 +16,25 @@ public class PlayerPickupController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.E))
         {
-            // на випадок, якщо тригер не спрацював — підбір вручну
             Collider[] hits = Physics.OverlapSphere(transform.position, 1.5f);
             foreach (var h in hits)
             {
-                var p = h.GetComponentInParent<WeaponPickup>();
-                if (p) { p.TryPickup(gameObject); break; }
+                var pickup = h.GetComponentInParent<WeaponPickup>();
+                if (pickup)
+                {
+                    var prefab = GetWeaponPrefab(pickup);
+                    if (prefab && weaponSwitcher.AddWeaponFromPrefab(prefab))
+                        Destroy(pickup.gameObject);
+                    break;
+                }
             }
         }
+    }
+
+    private GameObject GetWeaponPrefab(WeaponPickup pickup)
+    {
+        // доступ через приватне поле
+        var field = typeof(WeaponPickup).GetField("weaponPrefab", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        return field?.GetValue(pickup) as GameObject;
     }
 }

@@ -8,8 +8,8 @@ public class WeaponSwitcher : MonoBehaviour
     [SerializeField] private List<WeaponBase> weapons = new();
     [SerializeField] private int startIndex = 0;
     [SerializeField, Min(1)] private int maxSlots = 3;
-    [SerializeField] private bool autoReplaceWhenFull = true;  // якщо інвентар повний: true=замінюємо поточну, false=ігноруємо пікап
-    [SerializeField] private bool preventDuplicates = true;    // забороняти повтор того самого префаба
+    [SerializeField] private bool autoReplaceWhenFull = true;
+    [SerializeField] private bool preventDuplicates = true;
 
     [Header("Mount Point")]
     [SerializeField] private Transform weaponRoot;
@@ -18,27 +18,38 @@ public class WeaponSwitcher : MonoBehaviour
     [SerializeField] private GameObject weaponPickupPrefab;
     [SerializeField] private float dropForce = 4f;
 
+    [Header("Animator Link")]
+    [SerializeField] private Animator animator;
+    private static readonly int WeaponTypeParam = Animator.StringToHash("WeaponType");
+
     public WeaponBase Current { get; private set; }
     public int SlotCount => weapons.Count;
-
     public event Action<WeaponBase> WeaponChanged;
 
     private void Awake()
     {
+        if (!animator)
+            animator = GetComponentInChildren<Animator>();
+
         maxSlots = Mathf.Clamp(maxSlots, 1, 3);
 
+        // Деактивуємо всі, активуємо тільки стартову
+        for (int i = 0; i < weapons.Count; i++)
+        {
+            if (weapons[i])
+                weapons[i].gameObject.SetActive(i == startIndex);
+        }
+
+        // Вибір початкової зброї
         if (weapons.Count > 0)
         {
-            for (int i = 0; i < weapons.Count; i++)
-                if (weapons[i]) weapons[i].gameObject.SetActive(i == startIndex);
-
-            SelectIndex(Mathf.Clamp(startIndex, 0, weapons.Count - 1)); // тригерить WeaponChanged
+            SelectIndex(Mathf.Clamp(startIndex, 0, weapons.Count - 1));
         }
         else
         {
-            // інвентарь пустий — повідомляємо HUD
             Current = null;
             WeaponChanged?.Invoke(null);
+            UpdateAnimatorWeaponType();
         }
     }
 
@@ -48,32 +59,39 @@ public class WeaponSwitcher : MonoBehaviour
         {
             Current = null;
             WeaponChanged?.Invoke(null);
+            UpdateAnimatorWeaponType();
             return;
         }
 
         idx = Mathf.Clamp(idx, 0, weapons.Count - 1);
-        var newW = weapons[idx];
+        WeaponBase newW = weapons[idx];
+
         if (!newW)
         {
             Current = null;
             WeaponChanged?.Invoke(null);
+            UpdateAnimatorWeaponType();
             return;
         }
 
         if (Current == newW)
         {
-            // гарантуємо видимість і сповістимо HUD (на випадок відновлення сцени)
             for (int i = 0; i < weapons.Count; i++)
                 if (weapons[i]) weapons[i].gameObject.SetActive(i == idx);
 
             WeaponChanged?.Invoke(Current);
+            UpdateAnimatorWeaponType();
             return;
         }
 
-        // відчепляємо попередню
-        if (Current) Current.OnUnequip();
+        // Вимкнути попередню
+        if (Current)
+        {
+            Current.OnUnequip();
+            Current.gameObject.SetActive(false);
+        }
 
-        // вмикаємо нову, решту вимикаємо
+        // Активувати нову
         for (int i = 0; i < weapons.Count; i++)
             if (weapons[i]) weapons[i].gameObject.SetActive(i == idx);
 
@@ -86,6 +104,7 @@ public class WeaponSwitcher : MonoBehaviour
         }
 
         WeaponChanged?.Invoke(Current);
+        UpdateAnimatorWeaponType();
     }
 
     public void SelectNext(bool forward = true)
@@ -94,36 +113,38 @@ public class WeaponSwitcher : MonoBehaviour
         {
             Current = null;
             WeaponChanged?.Invoke(null);
+            UpdateAnimatorWeaponType();
             return;
         }
+
         int cur = Mathf.Max(0, weapons.IndexOf(Current));
         int next = (cur + (forward ? 1 : -1) + weapons.Count) % weapons.Count;
         SelectIndex(next);
     }
 
-    // ====== ПІКАП ======
     public bool AddWeaponFromPrefab(GameObject weaponPrefab)
     {
         if (!weaponPrefab || !weaponRoot) return false;
+        if (preventDuplicates && HasWeaponPrefab(weaponPrefab)) return false;
 
-        if (preventDuplicates && HasWeaponPrefab(weaponPrefab))
-            return false;
-
+        // Якщо повний інвентар — дропаємо поточну
         if (weapons.Count >= maxSlots)
         {
             if (!autoReplaceWhenFull) return false;
-            if (Current != null)
+
+            if (Current)
             {
                 SpawnPickupFor(Current);
                 RemoveWeaponInstance(Current);
             }
         }
 
+        // Створення нової зброї
         GameObject inst = Instantiate(weaponPrefab, weaponRoot);
         inst.transform.localPosition = Vector3.zero;
         inst.transform.localRotation = Quaternion.identity;
 
-        var wb = inst.GetComponent<WeaponBase>() ?? inst.GetComponentInChildren<WeaponBase>();
+        WeaponBase wb = inst.GetComponent<WeaponBase>() ?? inst.GetComponentInChildren<WeaponBase>();
         if (!wb)
         {
             Debug.LogWarning("WeaponSwitcher: Added weapon prefab has no WeaponBase.");
@@ -133,11 +154,12 @@ public class WeaponSwitcher : MonoBehaviour
 
         wb.SetPrefabReference(weaponPrefab);
         weapons.Add(wb);
+
+        // Активуємо її одразу
         SelectIndex(weapons.Count - 1);
         return true;
     }
 
-    // ====== ДРОП ======
     public void DropCurrent()
     {
         if (!Current) return;
@@ -151,19 +173,21 @@ public class WeaponSwitcher : MonoBehaviour
         }
         else
         {
-            // інвентарь порожній — повідомляємо HUD, щоб очистився
             Current = null;
             WeaponChanged?.Invoke(null);
+            UpdateAnimatorWeaponType();
         }
     }
 
-    // ====== ЮТІЛІТИ ======
     public bool TryGetWeaponOfType<T>(out T result) where T : WeaponBase
     {
         foreach (var w in weapons)
         {
-            if (!w) continue;
-            if (w is T t) { result = t; return true; }
+            if (w is T t)
+            {
+                result = t;
+                return true;
+            }
         }
         result = null;
         return false;
@@ -174,8 +198,8 @@ public class WeaponSwitcher : MonoBehaviour
         if (!prefab) return false;
         foreach (var w in weapons)
         {
-            if (!w) continue;
-            if (w.WeaponPrefab == prefab) return true;
+            if (w && w.WeaponPrefab == prefab)
+                return true;
         }
         return false;
     }
@@ -188,7 +212,8 @@ public class WeaponSwitcher : MonoBehaviour
             Destroy(weapons[idx].gameObject);
             weapons.RemoveAt(idx);
         }
-        if (Current == wb) Current = null;
+        if (Current == wb)
+            Current = null;
     }
 
     private void SpawnPickupFor(WeaponBase wb)
@@ -196,21 +221,13 @@ public class WeaponSwitcher : MonoBehaviour
         if (!weaponPickupPrefab || !wb) return;
 
         GameObject prefab = wb.WeaponPrefab;
-        if (!prefab)
-        {
-            Debug.LogWarning("WeaponSwitcher: weapon has no WeaponPrefab reference.");
-            return;
-        }
+        if (!prefab) return;
 
-        Vector3 spawn = transform.position + transform.forward * 1.0f + Vector3.up * 1.0f;
-        if (Physics.Raycast(spawn + Vector3.up * 2f, Vector3.down, out var hit, 10f,
-            LayerMask.GetMask("Ground"), QueryTriggerInteraction.Ignore))
-        {
+        Vector3 spawn = transform.position + transform.forward + Vector3.up;
+        if (Physics.Raycast(spawn + Vector3.up * 2f, Vector3.down, out var hit, 10f, LayerMask.GetMask("Ground"), QueryTriggerInteraction.Ignore))
             spawn = hit.point + Vector3.up * 0.05f;
-        }
 
         GameObject pickup = Instantiate(weaponPickupPrefab, spawn, Quaternion.identity);
-
         if (pickup.TryGetComponent<Rigidbody>(out var rb) && !rb.isKinematic)
         {
             Vector3 impulse = (transform.forward + Vector3.up * 0.3f).normalized * dropForce;
@@ -219,5 +236,12 @@ public class WeaponSwitcher : MonoBehaviour
 
         var wp = pickup.GetComponent<WeaponPickup>();
         if (wp) wp.Setup(prefab);
+    }
+
+    private void UpdateAnimatorWeaponType()
+    {
+        if (!animator) return;
+        int typeValue = Current ? (int)Current.Type : 0;
+        animator.SetInteger(WeaponTypeParam, typeValue);
     }
 }
