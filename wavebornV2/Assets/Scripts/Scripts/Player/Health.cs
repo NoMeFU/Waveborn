@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using System;
 
 public class Health : MonoBehaviour
@@ -6,24 +6,29 @@ public class Health : MonoBehaviour
     public enum StartHpMode { Full, Custom }
 
     [Header("Config")]
-    [SerializeField, Min(1f)] private float maxHP = 100f;        // максимум HP
+    [SerializeField, Min(1f)] private float maxHP = 100f;
     [SerializeField] private StartHpMode startMode = StartHpMode.Full;
-    [SerializeField, Min(0f)] private float startHP = 100f;      // стартове HP, якщо режим Custom
-    [SerializeField] private bool destroyOnDeath = true; // ворогів зазвичай знищуємо
+    [SerializeField, Min(0f)] private float startHP = 100f;
+    [SerializeField] private bool destroyOnDeath = true;
+
+    [Header("Shield Integration")]
+    [SerializeField] private ShieldController shieldController;
 
     [Header("Runtime (read-only)")]
-    [SerializeField] private float currentHP; // показуємо у інспекторі для дебагу
+    [SerializeField] private float currentHP;
 
-    // Публічний API
+    // РџСѓР±Р»С–С‡РЅРёР№ API
     public float MaxHP => maxHP;
     public float CurrentHP => currentHP;
     public bool IsAlive => currentHP > 0f;
+    public bool HasShield => shieldController && shieldController.IsActive;
 
-    // Події
-    public Action<float, float> OnChanged; // (current, max)
+    // РџРѕРґС–С—
+    public Action<float, float> OnChanged;
     public Action OnDied;
-    public Action<float> OnDamaged;        // скільки отримав
-    public Action<float> OnHealed;         // скільки зцілено
+    public Action<float> OnDamaged;
+    public Action<float> OnHealed;
+    public Action<float> OnShieldBlocked; // РЅРѕРІР° РїРѕРґС–СЏ РґР»СЏ Р·Р°Р±Р»РѕРєРѕРІР°РЅРѕРіРѕ СѓСЂРѕРЅСѓ
 
     private void Awake()
     {
@@ -31,16 +36,20 @@ public class Health : MonoBehaviour
             ? maxHP
             : Mathf.Clamp(startHP, 0f, maxHP);
 
+        // РђРІС‚РѕРїРѕС€СѓРє ShieldController
+        if (!shieldController)
+        {
+            shieldController = GetComponent<ShieldController>();
+        }
+
         OnChanged?.Invoke(currentHP, maxHP);
     }
 
     private void OnValidate()
     {
-        // тримаємо старт у межах
         maxHP = Mathf.Max(1f, maxHP);
         startHP = Mathf.Clamp(startHP, 0f, maxHP);
 
-        // якщо редагуєш у редакторі в режимі Edit, підтримай узгодженість:
         if (!Application.isPlaying)
         {
             if (startMode == StartHpMode.Full) currentHP = maxHP;
@@ -48,11 +57,18 @@ public class Health : MonoBehaviour
         }
     }
 
-    // ================== ПУБЛІЧНІ МЕТОДИ ==================
+    // ================== РџРЈР‘Р›Р†Р§РќР† РњР•РўРћР”Р ==================
 
     public void TakeDamage(float dmg)
     {
         if (!IsAlive || dmg <= 0f) return;
+
+        if (shieldController && shieldController.TryBlockDamage(dmg))
+        {
+            OnShieldBlocked?.Invoke(dmg);
+            Debug.Log($"<color=cyan>рџ›ЎпёЏ {gameObject.name} Р·Р°Р±Р»РѕРєСѓРІР°РІ {dmg} СѓСЂРѕРЅСѓ С‰РёС‚РѕРј!</color>");
+            return; 
+        }
 
         float before = currentHP;
         currentHP = Mathf.Max(0f, currentHP - dmg);
@@ -77,7 +93,6 @@ public class Health : MonoBehaviour
         OnChanged?.Invoke(currentHP, maxHP);
     }
 
-    /// <summary>Задати поточне HP (зручний девтул для інспектора/скриптів).</summary>
     public void SetCurrentHP(float value)
     {
         float clamped = Mathf.Clamp(value, 0f, maxHP);
@@ -90,7 +105,6 @@ public class Health : MonoBehaviour
         if (wasAlive && currentHP <= 0f) Die();
     }
 
-    /// <summary>Встановити новий максимум HP. keepRatio=true — зберегти відсоток поточного HP.</summary>
     public void SetMaxHP(float newMax, bool keepRatio = true)
     {
         newMax = Mathf.Max(1f, newMax);
@@ -110,7 +124,6 @@ public class Health : MonoBehaviour
         OnChanged?.Invoke(currentHP, maxHP);
     }
 
-    /// <summary>Збільшити максимум HP; healToFull=true — одразу повне відновлення.</summary>
     public void AddMaxHP(float delta, bool healToFull = false)
     {
         SetMaxHP(maxHP + delta, keepRatio: !healToFull);
@@ -121,7 +134,6 @@ public class Health : MonoBehaviour
         }
     }
 
-    /// <summary>Оживити (atPercent 0..1).</summary>
     public void Revive(float atPercent = 1f)
     {
         float p = Mathf.Clamp01(atPercent);
@@ -129,7 +141,6 @@ public class Health : MonoBehaviour
         OnChanged?.Invoke(currentHP, maxHP);
     }
 
-    /// <summary>Миттєво вбити.</summary>
     public void Kill()
     {
         if (!IsAlive) return;
@@ -138,16 +149,14 @@ public class Health : MonoBehaviour
         Die();
     }
 
-    // ================== ВНУТРІШНЄ ==================
+    public ShieldController GetShield() => shieldController;
+
+    // ================== Р’РќРЈРўР Р†РЁРќР„ ==================
 
     private void Die()
     {
         OnDied?.Invoke();
         if (destroyOnDeath)
             Destroy(gameObject);
-        // Якщо це Player — вимкни destroyOnDeath і оброби OnDied у свому менеджері (UI «You Died», респавн тощо)
     }
-
-    // ================== DEV-ШОРТКАТИ (не обов’язково) ==================
-
 }
