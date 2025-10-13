@@ -22,7 +22,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 moveDir;
     private float turnInput;
     private bool isShooting;
-
+    public bool canMove = true;
     private void Awake()
     {
         cc = GetComponent<CharacterController>();
@@ -35,7 +35,8 @@ public class PlayerController : MonoBehaviour
         HandleMovement();
         HandleRotationByMouse();
         HandleFireAndSwitch();
-        //Debug.Log($"PlayerController: Speed={GetSpeed():F2}, LocalMove={GetLocalMove()}, IsShooting={IsShooting}");
+        if (!canMove) return; 
+        HandleMovement();
     }
 
     // ===== РУХ =====

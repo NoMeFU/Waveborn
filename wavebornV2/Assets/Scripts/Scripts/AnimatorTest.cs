@@ -23,7 +23,7 @@ public class AnimatorTest : MonoBehaviour
         if (Input.GetKey(KeyCode.D)) right = 1f;
         if (Input.GetKey(KeyCode.A)) right = -1f;
 
-        speed = Mathf.Sqrt(forward * forward + right * right) * 7f;
+        speed = Mathf.Sqrt(forward * forward + right * right) * 4f;
 
         anim.SetFloat("Speed", speed);
         anim.SetFloat("Forward", forward);
