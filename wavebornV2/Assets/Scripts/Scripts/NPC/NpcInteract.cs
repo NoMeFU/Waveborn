@@ -1,32 +1,37 @@
-﻿// Assets/Scripts/NPC/NpcInteract.cs
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 
 [RequireComponent(typeof(Collider))]
 public class NpcInteract : MonoBehaviour
 {
-    [SerializeField] private DialogueUI dialogueUI;
-    [SerializeField] private TextMeshProUGUI interactHint;
-    [SerializeField] private string hintText = "Натисни <b>E</b>, щоб поговорити";
+    [Header("Interaction Settings")]
     [SerializeField] private KeyCode interactKey = KeyCode.E;
+    [SerializeField] private string hintText = "Натисни <b>E</b>, щоб поговорити";
+    [SerializeField] private TextMeshProUGUI interactHint;
+
+    [Header("UI Settings")]
+    [Tooltip("Перетягни сюди Canvas або панель, яку потрібно вмикати при взаємодії")]
+    [SerializeField] private GameObject uiToActivate;
 
     private bool _inside;
+    private bool _uiWasActive;
 
     private void Awake()
     {
         var col = GetComponent<Collider>();
         col.isTrigger = true;
-        if (!dialogueUI) dialogueUI = FindObjectOfType<DialogueUI>();
         SetHint(false);
+        if (uiToActivate) uiToActivate.SetActive(false);
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
         _inside = true;
-        if (dialogueUI && !dialogueUI.IsOpen)
+
+        if (!DialogueUI.IsAnyOpen() && interactHint)
         {
-            if (interactHint) interactHint.text = hintText;
+            interactHint.text = hintText;
             SetHint(true);
         }
     }
@@ -36,22 +41,41 @@ public class NpcInteract : MonoBehaviour
         if (!other.CompareTag("Player")) return;
         _inside = false;
         SetHint(false);
-        // бажаєш – закривай діалог при виході:
-        // if (dialogueUI && dialogueUI.IsOpen) dialogueUI.CloseAll();
+
+        if (uiToActivate)
+        {
+            uiToActivate.SetActive(false);
+            _uiWasActive = false;
+        }
     }
 
     private void Update()
     {
-        if (!_inside || !dialogueUI) return;
+        if (!_inside || uiToActivate == null) return;
+
         if (Input.GetKeyDown(interactKey))
         {
-            dialogueUI.OpenMenu();
+            bool isActive = uiToActivate.activeSelf;
+
+            // Закриваємо якщо вже було відкрите
+            if (isActive)
+            {
+                uiToActivate.SetActive(false);
+                _uiWasActive = false;
+            }
+            else
+            {
+                uiToActivate.SetActive(true);
+                _uiWasActive = true;
+            }
+
             SetHint(false);
         }
     }
 
     private void SetHint(bool on)
     {
-        if (interactHint) interactHint.gameObject.SetActive(on);
+        if (interactHint)
+            interactHint.gameObject.SetActive(on);
     }
 }

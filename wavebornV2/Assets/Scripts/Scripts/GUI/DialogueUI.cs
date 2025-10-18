@@ -1,13 +1,13 @@
-﻿// Assets/Scripts/NPC/DialogueUI.cs
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class DialogueUI : MonoBehaviour
 {
     [Header("Panels")]
-    [SerializeField] private GameObject menuRoot;     // панель із кнопками (What/Tasks/Exit)
-    [SerializeField] private GameObject dialogueRoot; // панель з текстом і кнопкою "Далі"
+    [SerializeField] private GameObject menuRoot;
+    [SerializeField] private GameObject dialogueRoot;
 
     [Header("Menu Buttons")]
     [SerializeField] private Button whatButton;
@@ -27,9 +27,12 @@ public class DialogueUI : MonoBehaviour
     private int _index = -1;
     private bool _pushed;
 
+    private static readonly HashSet<DialogueUI> _openUIs = new(); // 🔹 слідкуємо за активними меню
+
     private void Awake()
     {
-        CloseAll(); // сховати все і зняти блок, якщо був
+        CloseAll();
+
         if (whatButton) whatButton.onClick.AddListener(OpenWhat);
         if (exitButton) exitButton.onClick.AddListener(CloseAll);
         if (nextButton) nextButton.onClick.AddListener(Advance);
@@ -42,45 +45,37 @@ public class DialogueUI : MonoBehaviour
             Advance();
     }
 
-    // ===== API =====
     public void OpenMenu()
     {
         if (!_pushed) { InputBlocker.Push(); _pushed = true; }
+
         IsOpen = true;
+        _openUIs.Add(this);
+
         SafeSet(menuRoot, true);
         SafeSet(dialogueRoot, false);
+
         if (textField) textField.gameObject.SetActive(false);
-    }
-
-    public void ShowDialogueText(string message)
-    {
-        if (!_pushed) { InputBlocker.Push(); _pushed = true; }
-        IsOpen = true;
-
-        SafeSet(menuRoot, false);
-        SafeSet(dialogueRoot, true);
-        if (textField)
-        {
-            textField.gameObject.SetActive(true);
-            textField.enabled = true;
-            textField.text = message;
-        }
-        if (nextButton) nextButton.gameObject.SetActive(false); // одноразове повідомлення
     }
 
     public void CloseAll()
     {
         SafeSet(menuRoot, false);
         SafeSet(dialogueRoot, false);
-        if (textField) { textField.text = ""; textField.gameObject.SetActive(false); }
+        if (textField)
+        {
+            textField.text = "";
+            textField.gameObject.SetActive(false);
+        }
+
         _current = null;
         _index = -1;
         IsOpen = false;
+        _openUIs.Remove(this);
 
         if (_pushed) { InputBlocker.Pop(); _pushed = false; }
     }
 
-    // ===== Вбудований діалог "Що тут відбувається?" =====
     private void OpenWhat()
     {
         if (whatDialogue == null || whatDialogue.Count == 0) return;
@@ -110,7 +105,6 @@ public class DialogueUI : MonoBehaviour
         _index++;
         if (_index >= _current.Count)
         {
-            // закінчили – назад у меню
             SafeSet(dialogueRoot, false);
             if (textField) textField.gameObject.SetActive(false);
             SafeSet(menuRoot, true);
@@ -124,7 +118,27 @@ public class DialogueUI : MonoBehaviour
     private static void SafeSet(GameObject go, bool on)
     {
         if (!go) return;
-        if (go.GetComponent<Canvas>()) return; // не вимикати весь Canvas
+        if (go.GetComponent<Canvas>()) return;
         go.SetActive(on);
+    }
+
+    public static bool IsAnyOpen() => _openUIs.Count > 0;
+    public void ShowDialogueText(string message)
+    {
+        if (!_pushed) { InputBlocker.Push(); _pushed = true; }
+        IsOpen = true;
+        _openUIs.Add(this);
+
+        SafeSet(menuRoot, false);
+        SafeSet(dialogueRoot, true);
+
+        if (textField)
+        {
+            textField.gameObject.SetActive(true);
+            textField.enabled = true;
+            textField.text = message;
+        }
+
+        if (nextButton) nextButton.gameObject.SetActive(false); // одноразове повідомлення
     }
 }
