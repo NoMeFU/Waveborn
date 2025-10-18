@@ -1,81 +1,81 @@
 ﻿using UnityEngine;
-using TMPro;
 
 [RequireComponent(typeof(Collider))]
 public class NpcInteract : MonoBehaviour
 {
     [Header("Interaction Settings")]
+    [SerializeField] private float interactDistance = 3f;
     [SerializeField] private KeyCode interactKey = KeyCode.E;
-    [SerializeField] private string hintText = "Натисни <b>E</b>, щоб поговорити";
-    [SerializeField] private TextMeshProUGUI interactHint;
+    [SerializeField] private GameObject interactionHint; // UI підказка “Натисни E”
 
-    [Header("UI Settings")]
-    [Tooltip("Перетягни сюди Canvas або панель, яку потрібно вмикати при взаємодії")]
-    [SerializeField] private GameObject uiToActivate;
+    [Header("Linked Components")]
+    [SerializeField] private DialogueUI dialogueUI;
 
-    private bool _inside;
-    private bool _uiWasActive;
+    private Transform player;
+    private bool playerInRange = false;
 
-    private void Awake()
+    private void Start()
     {
-        var col = GetComponent<Collider>();
+        // Пошук гравця
+        player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+        // Автоматичний пошук DialogueUI
+        if (!dialogueUI)
+            dialogueUI = GetComponentInChildren<DialogueUI>();
+
+        // Переконуємося, що колайдер тригер
+        Collider col = GetComponent<Collider>();
         col.isTrigger = true;
-        SetHint(false);
-        if (uiToActivate) uiToActivate.SetActive(false);
+
+        // Ховаємо підказку спочатку
+        if (interactionHint)
+            interactionHint.SetActive(false);
+    }
+
+    private void Update()
+    {
+        // Якщо діалог вже відкритий — не перевіряємо взаємодію
+        if (DialogueUI.IsAnyOpen())
+            return;
+
+        if (playerInRange && Input.GetKeyDown(interactKey))
+        {
+            Interact();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
-        _inside = true;
-
-        if (!DialogueUI.IsAnyOpen() && interactHint)
+        if (other.CompareTag("Player"))
         {
-            interactHint.text = hintText;
-            SetHint(true);
+            playerInRange = true;
+            if (interactionHint)
+                interactionHint.SetActive(true);
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
-        _inside = false;
-        SetHint(false);
-
-        if (uiToActivate)
+        if (other.CompareTag("Player"))
         {
-            uiToActivate.SetActive(false);
-            _uiWasActive = false;
+            playerInRange = false;
+            if (interactionHint)
+                interactionHint.SetActive(false);
+
+            // Закрити UI, якщо вийшов із зони
+            if (dialogueUI && dialogueUI.IsOpen)
+                dialogueUI.CloseAll();
         }
     }
 
-    private void Update()
+    private void Interact()
     {
-        if (!_inside || uiToActivate == null) return;
-
-        if (Input.GetKeyDown(interactKey))
+        if (!dialogueUI)
         {
-            bool isActive = uiToActivate.activeSelf;
-
-            // Закриваємо якщо вже було відкрите
-            if (isActive)
-            {
-                uiToActivate.SetActive(false);
-                _uiWasActive = false;
-            }
-            else
-            {
-                uiToActivate.SetActive(true);
-                _uiWasActive = true;
-            }
-
-            SetHint(false);
+            Debug.LogWarning($"NPC '{name}' не має підключеного DialogueUI!");
+            return;
         }
-    }
 
-    private void SetHint(bool on)
-    {
-        if (interactHint)
-            interactHint.gameObject.SetActive(on);
+        dialogueUI.OpenMenu();
     }
 }

@@ -24,6 +24,7 @@ public class QuestManager : MonoBehaviour
             return;
         }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     public void Accept(QuestSO quest)

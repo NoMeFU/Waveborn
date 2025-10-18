@@ -129,8 +129,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHP: 100
   startMode: 0
-  startHP: 1
+  startHP: 100
   destroyOnDeath: 1
+  shieldController: {fileID: 0}
   currentHP: 100
 --- !u!54 &7745205356768716047
 Rigidbody:
@@ -226,10 +227,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lootTable:
-  - itemPrefab: {fileID: 0}
-    dropChance: 0
-    minAmount: 0
-    maxAmount: 0
+  - itemPrefab: {fileID: 8381411716297003114, guid: c5427a00496fcc54ead12f3ce698f0ef, type: 3}
+    dropChance: 100
+    minAmount: 1
+    maxAmount: 1
   minCoins: 1
   maxCoins: 1
   coinPrefab: {fileID: 8381411716297003114, guid: c5427a00496fcc54ead12f3ce698f0ef, type: 3}
