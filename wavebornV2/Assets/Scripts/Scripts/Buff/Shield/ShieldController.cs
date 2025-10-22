@@ -29,6 +29,9 @@ public class ShieldController : MonoBehaviour
     public float RemainingTime => shieldTimer;
     public float RemainingPercent => isActive ? shieldTimer / shieldDuration : 0f;
 
+    // Використовується для апгрейдів
+    public float BaseDuration => shieldDuration;
+
     public event Action ShieldActivated;
     public event Action ShieldDeactivated;
     public event Action<float> ShieldDamageBlocked;
@@ -237,5 +240,16 @@ public class ShieldController : MonoBehaviour
     private void TestDeactivate()
     {
         DeactivateShield();
+    }
+
+    // === Методи для UpgradeSystem ===
+    public void SetShieldDuration(float newDuration)
+    {
+        shieldDuration = newDuration;
+    }
+
+    public void SetDuration(float value)
+    {
+        shieldDuration = value;
     }
 }

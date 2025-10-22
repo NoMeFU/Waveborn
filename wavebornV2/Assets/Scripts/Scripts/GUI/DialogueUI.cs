@@ -1,7 +1,7 @@
-﻿using UnityEngine;
-using TMPro;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
+using TMPro;
 
 public class DialogueUI : MonoBehaviour
 {
@@ -18,20 +18,22 @@ public class DialogueUI : MonoBehaviour
     [SerializeField] private Button nextButton;
     [SerializeField] private KeyCode advanceKey = KeyCode.Space;
 
-    [Header("Data")]
-    [SerializeField] private DialogueData whatDialogue;
+    [Header("Debug / Data")]
+    [SerializeField] private string[] fallbackLines;
 
-    public bool IsOpen { get; private set; }
+    private Action onDialogueEnd;
+    public bool IsOpen => (menuRoot != null && menuRoot.activeSelf) || (dialogueRoot != null && dialogueRoot.activeSelf);
 
-    private DialogueData _current;
+    private string[] _currentDialogue;
     private int _index = -1;
-    private bool _pushed;
+    private bool _pushedInputBlock = false;
 
-    private static readonly HashSet<DialogueUI> _openUIs = new(); // 🔹 слідкуємо за активними меню
+    private static readonly System.Collections.Generic.HashSet<DialogueUI> _openUIs = new(); // слідкуємо за активними меню
 
     private void Awake()
     {
-        CloseAll();
+        SafeSet(menuRoot, false);
+        SafeSet(dialogueRoot, false);
 
         if (whatButton) whatButton.onClick.AddListener(OpenWhat);
         if (exitButton) exitButton.onClick.AddListener(CloseAll);
@@ -41,15 +43,15 @@ public class DialogueUI : MonoBehaviour
     private void Update()
     {
         if (!IsOpen) return;
-        if (dialogueRoot && dialogueRoot.activeSelf && Input.GetKeyDown(advanceKey))
+
+        if (dialogueRoot != null && dialogueRoot.activeSelf && Input.GetKeyDown(advanceKey))
             Advance();
     }
 
     public void OpenMenu()
     {
-        if (!_pushed) { InputBlocker.Push(); _pushed = true; }
+        if (!_pushedInputBlock) { InputBlocker.Push(); _pushedInputBlock = true; }
 
-        IsOpen = true;
         _openUIs.Add(this);
 
         SafeSet(menuRoot, true);
@@ -62,71 +64,99 @@ public class DialogueUI : MonoBehaviour
     {
         SafeSet(menuRoot, false);
         SafeSet(dialogueRoot, false);
+
         if (textField)
         {
             textField.text = "";
             textField.gameObject.SetActive(false);
         }
 
-        _current = null;
+        _currentDialogue = null;
         _index = -1;
-        IsOpen = false;
-        _openUIs.Remove(this);
+        onDialogueEnd?.Invoke();
+        onDialogueEnd = null;
 
-        if (_pushed) { InputBlocker.Pop(); _pushed = false; }
+        _openUIs.Remove(this);
+        if (_pushedInputBlock) { InputBlocker.Pop(); _pushedInputBlock = false; }
     }
 
     private void OpenWhat()
     {
-        if (whatDialogue == null || whatDialogue.Count == 0) return;
-        StartDialogue(whatDialogue);
+        StartDialogue(fallbackLines, null);
     }
 
-    private void StartDialogue(DialogueData data)
+    public void StartDialogue(string[] lines, Action onEnd = null)
     {
-        if (!_pushed) { InputBlocker.Push(); _pushed = true; }
-        IsOpen = true;
+        onDialogueEnd = onEnd;
+        if (!_pushedInputBlock) { InputBlocker.Push(); _pushedInputBlock = true; }
+        _openUIs.Add(this);
 
-        _current = data;
+        _currentDialogue = lines ?? fallbackLines;
         _index = -1;
 
         SafeSet(menuRoot, false);
         SafeSet(dialogueRoot, true);
+
         if (textField) { textField.gameObject.SetActive(true); textField.enabled = true; }
 
         if (nextButton) nextButton.gameObject.SetActive(true);
         Advance();
     }
 
+    // Overload used by other scripts (no params) to start a simple dialogue that will call onDialogueEnd when closed
+    public void StartDialogue(Action onEnd = null)
+    {
+        StartDialogue(fallbackLines, onEnd);
+    }
+
     private void Advance()
     {
-        if (_current == null) return;
+        if (_currentDialogue == null)
+        {
+            EndDialogueImmediately();
+            return;
+        }
 
         _index++;
-        if (_index >= _current.Count)
+        if (_index >= _currentDialogue.Length)
         {
             SafeSet(dialogueRoot, false);
             if (textField) textField.gameObject.SetActive(false);
             SafeSet(menuRoot, true);
-            _current = null;
+
+            _currentDialogue = null;
             _index = -1;
+
+            onDialogueEnd?.Invoke();
+            onDialogueEnd = null;
+
+            _openUIs.Remove(this);
+            if (_pushedInputBlock) { InputBlocker.Pop(); _pushedInputBlock = false; }
             return;
         }
-        if (textField) textField.text = _current.GetLine(_index);
+
+        if (textField) textField.text = _currentDialogue[_index];
     }
 
-    private static void SafeSet(GameObject go, bool on)
+    private void EndDialogueImmediately()
     {
-        if (!go) return;
-        if (go.GetComponent<Canvas>()) return;
-        go.SetActive(on);
+        SafeSet(dialogueRoot, false);
+        if (textField) textField.gameObject.SetActive(false);
+        SafeSet(menuRoot, true);
+
+        _currentDialogue = null;
+        _index = -1;
+
+        onDialogueEnd?.Invoke();
+        onDialogueEnd = null;
+
+        _openUIs.Remove(this);
+        if (_pushedInputBlock) { InputBlocker.Pop(); _pushedInputBlock = false; }
     }
 
-    public static bool IsAnyOpen() => _openUIs.Count > 0;
     public void ShowDialogueText(string message)
     {
-        if (!_pushed) { InputBlocker.Push(); _pushed = true; }
-        IsOpen = true;
+        if (!_pushedInputBlock) { InputBlocker.Push(); _pushedInputBlock = true; }
         _openUIs.Add(this);
 
         SafeSet(menuRoot, false);
@@ -139,6 +169,14 @@ public class DialogueUI : MonoBehaviour
             textField.text = message;
         }
 
-        if (nextButton) nextButton.gameObject.SetActive(false); // одноразове повідомлення
+        if (nextButton) nextButton.gameObject.SetActive(false);
     }
+
+    private static void SafeSet(GameObject go, bool on)
+    {
+        if (!go) return;
+        go.SetActive(on);
+    }
+
+    public static bool IsAnyOpen() => _openUIs.Count > 0;
 }

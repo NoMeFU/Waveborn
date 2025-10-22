@@ -23,6 +23,15 @@ public class PlayerController : MonoBehaviour
     private float turnInput;
     private bool isShooting;
     public bool canMove = true;
+
+    // Базові значення (для UpgradeSystem)
+    public float BaseMoveSpeed => moveSpeed;
+    public float BaseFireRate { get; private set; } = 1f;
+    public float BaseBuffDuration { get; private set; } = 5f;
+
+    private float currentBuffDuration = 5f;
+    private float currentFireRate = 1f;
+
     private void Awake()
     {
         cc = GetComponent<CharacterController>();
@@ -32,11 +41,11 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (!canMove) return;
+
         HandleMovement();
         HandleRotationByMouse();
         HandleFireAndSwitch();
-        if (!canMove) return; 
-        HandleMovement();
     }
 
     // ===== РУХ =====
@@ -121,28 +130,19 @@ public class PlayerController : MonoBehaviour
         {
             var weapon = weaponSwitcher?.Current;
             if (weapon != null && weapon.TryAttack())
-            {
                 isShooting = true;
-            }
         }
         else if (Input.GetMouseButtonUp(0))
-        {
             isShooting = false;
-        }
     }
 
-    // ===== API ДЛЯ АНІМАТОРА =====
-    public Vector3 GetLocalMove()
-    {
-        // Повертає швидкість у локальних координатах
-        return transform.InverseTransformDirection(moveDir * moveSpeed);
-    }
+    // ===== API для апгрейдів =====
+    public void SetSpeed(float newSpeed) => moveSpeed = newSpeed;
+    public void SetFireRate(float newRate) => currentFireRate = newRate;
+    public void SetBuffDuration(float newDuration) => currentBuffDuration = newDuration;
 
-    public float GetSpeed()
-    {
-        return moveDir.magnitude * moveSpeed;
-    }
-
+    public Vector3 GetLocalMove() => transform.InverseTransformDirection(moveDir * moveSpeed);
+    public float GetSpeed() => moveDir.magnitude * moveSpeed;
     public bool IsShooting => isShooting;
     public float GetTurnInput() => turnInput;
 }

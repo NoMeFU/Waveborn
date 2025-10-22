@@ -1,11 +1,15 @@
-﻿// Projectile.cs
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
     [Header("Audio")]
     [SerializeField] private AudioClip hitClip;
     [SerializeField] private AudioSource audioSource;
+
+    [Header("Visual")]
+    [SerializeField] private Renderer visualRenderer;
+    [SerializeField] private Color critColor = Color.red;
+    private Color defaultColor;
 
     [Header("Lifetime")]
     [SerializeField] private float lifeTime = 5f;
@@ -23,6 +27,15 @@ public class Projectile : MonoBehaviour
         speed = spd;
         hitMask = mask;
         life = lifeTime;
+
+        if (visualRenderer)
+            defaultColor = visualRenderer.material.color;
+    }
+
+    public void MarkAsCrit()
+    {
+        if (visualRenderer)
+            visualRenderer.material.color = critColor;
     }
 
     private void Update()

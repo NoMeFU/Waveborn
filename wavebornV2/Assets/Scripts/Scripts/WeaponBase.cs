@@ -101,4 +101,10 @@ public abstract class WeaponBase : MonoBehaviour
     {
         Unequipped?.Invoke(this);
     }
+    public void ModifyFireRate(float bonus)
+    {
+        fireRate += bonus;
+        fireRate = Mathf.Clamp(fireRate, 0.1f, 100f); // щоб не вийшло абсурдне значення
+    }
+
 }
