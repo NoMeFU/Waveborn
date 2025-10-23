@@ -20,12 +20,20 @@ public class RangedWeapon : WeaponBase
 
     protected override void OnAttack()
     {
-        if (!firePoint || !projectilePrefab) return;
+        if (!firePoint || !projectilePrefab)
+        {
+            Debug.LogWarning($"⚠️ {name}: firePoint або projectilePrefab не заданий!");
+            return;
+        }
+
         int count = Mathf.Max(1, pellets);
+        bool shotFired = false;
 
         for (int i = 0; i < count; i++)
         {
             Quaternion rot = firePoint.rotation;
+
+            // Розкид
             if (spreadDegrees > 0f)
             {
                 float yaw = Random.Range(-spreadDegrees, spreadDegrees);
@@ -33,20 +41,34 @@ public class RangedWeapon : WeaponBase
                 rot = Quaternion.Euler(firePoint.eulerAngles + new Vector3(pitch, yaw, 0f));
             }
 
+            // Підрахунок фінального урону
             float finalDamage = damage;
             bool isCrit = false;
 
-            // Якщо є PlayerStats — враховуємо крит
             if (playerStats)
             {
                 isCrit = Random.value < playerStats.critChance / 100f;
-                finalDamage = playerStats.damage * (isCrit ? playerStats.critMultiplier : 1f);
+                finalDamage = (damage + playerStats.damage) * (isCrit ? playerStats.critMultiplier : 1f);
             }
 
+            // Створення кулі
             var p = Instantiate(projectilePrefab, firePoint.position, rot);
-            p.Init(finalDamage, rot * Vector3.forward, projectileSpeed, hitMask);
+            if (p != null)
+            {
+                p.Init(finalDamage, rot * Vector3.forward, projectileSpeed, hitMask, gameObject);
+                if (isCrit) p.MarkAsCrit();
 
-            if (isCrit) p.MarkAsCrit(); // підсвічуємо кулю або робимо ефект
+                shotFired = true;
+
+                // 🔹 Debug — покаже реальний урон кожного пострілу
+                Debug.Log($"🔫 {name} постріл: {finalDamage:F1} dmg (crit: {isCrit})");
+            }
+        }
+
+        if (shotFired)
+        {
+            PlayFireSound();
+            AnimFire();
         }
     }
 }

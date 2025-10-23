@@ -21,6 +21,7 @@ public class Health : MonoBehaviour
     // Події
     public event Action<float, float> OnChanged; // (current, max)
     public event Action OnDied;
+    public float currentHealth;
 
     private bool isDead = false;
 

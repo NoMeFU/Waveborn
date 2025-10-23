@@ -119,8 +119,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4ecef93db00b894ea137c702d658c75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hitClip: {fileID: 0}
-  audioSource: {fileID: 0}
+  hitEffect: {fileID: 0}
+  critEffect: {fileID: 0}
   lifeTime: 5
 --- !u!114 &-5779911733502927408
 MonoBehaviour:
@@ -129,7 +129,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5169372629920409851}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d9508219a5907454c875750222ba7293, type: 3}
   m_Name: 

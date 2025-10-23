@@ -1,192 +1,200 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Система прокачки гравця через NPC.
-/// </summary>
-public class UpgradeSystem : MonoBehaviour
+[System.Serializable]
+public class UpgradeItem
 {
-    [Header("References")]
-    public PlayerStats playerStats;
-    public Health playerHealth;
-    public PlayerWallet playerWallet;
-    public GameObject upgradeMenu;
+    public string upgradeName;
+    public UpgradeType upgradeType;
+    public TMP_Text upgradeText;
+    public Button upgradeButton;
+    public int level = 0;
+    public int baseCost = 100;
+    public float costMultiplier = 1.5f;
+    public float upgradeValue = 1f;
 
-    [Header("Weapon Reference")]
-    public WeaponBase currentWeapon; // додано для доступу до зброї
-
-    [Header("Audio")]
-    public AudioSource audioSource;
-    public AudioClip upgradeSuccessClip;
-    public AudioClip upgradeFailClip;
-
-    [Header("UI Buttons")]
-    public Button closeButton;
-
-    [System.Serializable]
-    public class Upgrade
-    {
-        public string upgradeName;
-        public UpgradeType upgradeType;
-        public Button button;
-        public TMP_Text levelText;
-        public float upgradeValue = 10f;
-        public int maxLevel = 5;
-        public int baseCost = 100;
-        [HideInInspector] public int currentLevel = 0;
-    }
-
-    [Header("Upgrades")]
-    public Upgrade[] upgrades;
-
-    private bool menuOpen = false;
-
-    private void Start()
-    {
-        foreach (var upgrade in upgrades)
-        {
-            upgrade.button.onClick.AddListener(() => TryUpgrade(upgrade));
-            UpdateUpgradeText(upgrade);
-        }
-
-        if (closeButton)
-            closeButton.onClick.AddListener(CloseMenu);
-
-        if (upgradeMenu)
-            upgradeMenu.SetActive(false);
-    }
-
-    private void Update()
-    {
-        if (menuOpen && Input.GetKeyDown(KeyCode.Escape))
-            CloseMenu();
-    }
-
-    public void OpenMenu()
-    {
-        if (upgradeMenu)
-        {
-            upgradeMenu.SetActive(true);
-            menuOpen = true;
-
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-
-            var controller = FindObjectOfType<PlayerController>();
-            if (controller) controller.enabled = false;
-
-            // оновлюємо посилання на поточну зброю
-            currentWeapon = FindObjectOfType<WeaponBase>();
-        }
-    }
-
-    public void CloseMenu()
-    {
-        if (upgradeMenu)
-        {
-            upgradeMenu.SetActive(false);
-            menuOpen = false;
-
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-
-            var controller = FindObjectOfType<PlayerController>();
-            if (controller) controller.enabled = true;
-        }
-    }
-
-    private void TryUpgrade(Upgrade upgrade)
-    {
-        if (upgrade.currentLevel >= upgrade.maxLevel)
-        {
-            Debug.LogWarning($"{upgrade.upgradeName} вже на максимальному рівні!");
-            PlaySound(upgradeFailClip);
-            return;
-        }
-
-        int cost = GetUpgradeCost(upgrade);
-
-        if (!playerWallet.SpendCoins(cost))
-        {
-            Debug.LogWarning($"Недостатньо монет! Треба {cost}, а є {playerWallet.Coins}");
-            PlaySound(upgradeFailClip);
-            return;
-        }
-
-        upgrade.currentLevel++;
-        ApplyUpgrade(upgrade);
-        UpdateUpgradeText(upgrade);
-
-        Debug.Log($"✅ Прокачано: {upgrade.upgradeName} до рівня {upgrade.currentLevel}");
-        PlaySound(upgradeSuccessClip);
-    }
-
-    private void ApplyUpgrade(Upgrade upgrade)
-    {
-        switch (upgrade.upgradeType)
-        {
-            case UpgradeType.Health:
-                playerStats.AddHealth(upgrade.upgradeValue);
-                playerHealth.SetMaxHP(playerStats.maxHealth);
-                break;
-
-            case UpgradeType.Damage:
-                playerStats.AddDamage(upgrade.upgradeValue);
-                break;
-
-            case UpgradeType.Speed:
-                playerStats.AddSpeed(upgrade.upgradeValue);
-                break;
-
-            case UpgradeType.Shield:
-                playerStats.AddShieldDuration(upgrade.upgradeValue);
-                break;
-
-            case UpgradeType.Regen:
-                playerHealth.SetRegenRate(playerHealth.BaseRegen + upgrade.upgradeValue * upgrade.currentLevel);
-                break;
-
-            case UpgradeType.FireRate:
-                if (currentWeapon != null)
-                {
-                    currentWeapon.ModifyFireRate(upgrade.upgradeValue);
-                    Debug.Log($"🔥 Швидкість стрільби збільшено: {currentWeapon.name}");
-                }
-                break;
-        }
-    }
-
-    private int GetUpgradeCost(Upgrade upgrade)
-    {
-        return upgrade.baseCost * (upgrade.currentLevel + 1);
-    }
-
-    private void UpdateUpgradeText(Upgrade upgrade)
-    {
-        if (upgrade.levelText != null)
-        {
-            int cost = GetUpgradeCost(upgrade);
-            upgrade.levelText.text = $"{upgrade.upgradeName}\nLv. {upgrade.currentLevel}/{upgrade.maxLevel}\n💰 {cost}";
-        }
-    }
-
-    private void PlaySound(AudioClip clip)
-    {
-        if (audioSource && clip)
-            audioSource.PlayOneShot(clip);
-    }
+    [Header("Limit")]
+    public int maxLevel = 10; // 👈 нове поле: максимальний рівень
 }
 
-/// <summary>
-/// Типи апгрейдів, включно зі швидкістю стрільби.
-/// </summary>
 public enum UpgradeType
 {
     Health,
     Damage,
     Speed,
     Shield,
-    Regen,
-    FireRate
+    FireRate,
+    CritChance,
+    CritDamage,
+    RegenHP // 👈 новий тип
+}
+
+public class UpgradeSystem : MonoBehaviour
+{
+    [Header("Основні компоненти")]
+    [SerializeField] private GameObject menuPanel;
+    [SerializeField] private TMP_Text coinsText;
+    [SerializeField] private Button closeButton;
+    [SerializeField] private List<UpgradeItem> upgrades = new List<UpgradeItem>();
+
+    [Header("Звук")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip openClip;
+    [SerializeField] private AudioClip closeClip;
+    [SerializeField] private AudioClip upgradeSuccessClip;
+    [SerializeField] private AudioClip upgradeFailClip;
+
+    private PlayerStats playerStats;
+    private PlayerWallet wallet;
+
+    private bool isOpen = false;
+    public bool IsOpen => isOpen;
+
+    private void Awake()
+    {
+        if (menuPanel)
+            menuPanel.SetActive(false);
+    }
+
+    private void Start()
+    {
+        playerStats = FindObjectOfType<PlayerStats>();
+        wallet = FindObjectOfType<PlayerWallet>();
+
+        if (closeButton)
+            closeButton.onClick.AddListener(CloseMenu);
+
+        foreach (var upg in upgrades)
+        {
+            if (upg.upgradeButton)
+            {
+                UpgradeItem item = upg;
+                upg.upgradeButton.onClick.AddListener(() => TryUpgrade(item));
+            }
+        }
+
+        UpdateUI();
+    }
+
+    private void Update()
+    {
+        if (isOpen && Input.GetKeyDown(KeyCode.Escape))
+            CloseMenu();
+    }
+
+    public void OpenMenu()
+    {
+        if (menuPanel) menuPanel.SetActive(true);
+        isOpen = true;
+
+        if (audioSource && openClip)
+            audioSource.PlayOneShot(openClip);
+
+        Time.timeScale = 0f;
+        UpdateUI();
+    }
+
+    public void CloseMenu()
+    {
+        if (menuPanel) menuPanel.SetActive(false);
+        isOpen = false;
+
+        if (audioSource && closeClip)
+            audioSource.PlayOneShot(closeClip);
+
+        Time.timeScale = 1f;
+    }
+
+    private void TryUpgrade(UpgradeItem item)
+    {
+        if (item.level >= item.maxLevel)
+            return;
+
+        int cost = GetCost(item);
+
+        if (!wallet.SpendCoins(cost))
+        {
+            if (audioSource && upgradeFailClip)
+                audioSource.PlayOneShot(upgradeFailClip);
+            return;
+        }
+
+        item.level++;
+        ApplyUpgrade(item);
+
+        if (audioSource && upgradeSuccessClip)
+            audioSource.PlayOneShot(upgradeSuccessClip);
+
+        UpdateUI();
+    }
+
+    private int GetCost(UpgradeItem item)
+    {
+        double raw = item.baseCost * System.Math.Pow(item.costMultiplier, item.level);
+        double clamped = System.Math.Min(raw, 9999999);
+        return Mathf.RoundToInt((float)clamped);
+    }
+
+    private void ApplyUpgrade(UpgradeItem item)
+    {
+        switch (item.upgradeType)
+        {
+            case UpgradeType.Health:
+                playerStats.AddHealth(item.upgradeValue);
+                break;
+            case UpgradeType.Damage:
+                playerStats.AddDamage(item.upgradeValue);
+                break;
+            case UpgradeType.Speed:
+                playerStats.AddSpeed(item.upgradeValue);
+                break;
+            case UpgradeType.Shield:
+                playerStats.AddShieldDuration(item.upgradeValue);
+                break;
+            case UpgradeType.FireRate:
+                playerStats.AddFireRate(item.upgradeValue);
+                break;
+            case UpgradeType.CritChance:
+                playerStats.AddCritChance(item.upgradeValue);
+                break;
+            case UpgradeType.CritDamage:
+                playerStats.AddCritMultiplier(item.upgradeValue);
+                break;
+            case UpgradeType.RegenHP:
+                playerStats.AddRegen(item.upgradeValue);
+                break;
+        }
+    }
+
+    private void UpdateUI()
+    {
+        if (wallet && coinsText)
+            coinsText.text = $"Монети: {FormatCost(wallet.Coins)}";
+
+        foreach (var item in upgrades)
+        {
+            if (!item.upgradeText) continue;
+
+            if (item.level >= item.maxLevel)
+            {
+                item.upgradeText.text = $"{item.upgradeName} Lv.{item.level} (MAX)";
+                if (item.upgradeButton) item.upgradeButton.interactable = false;
+            }
+            else
+            {
+                string costText = FormatCost(GetCost(item));
+                item.upgradeText.text = $"{item.upgradeName} Lv.{item.level} ({costText}💰)";
+                if (item.upgradeButton) item.upgradeButton.interactable = true;
+            }
+        }
+    }
+
+    private string FormatCost(int cost)
+    {
+        if (cost >= 1_000_000) return (cost / 1_000_000f).ToString("F1") + "M";
+        if (cost >= 1_000) return (cost / 1_000f).ToString("F1") + "K";
+        return cost.ToString();
+    }
 }

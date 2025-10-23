@@ -4391,11 +4391,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be509af030f73b84f94b36307cf5ac43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  menuPanel: {fileID: 0}
-  upgradeContainer: {fileID: 0}
-  upgradeButtonPrefab: {fileID: 0}
-  upgradeSystem: {fileID: 0}
-  isOpen: 0
 --- !u!1 &1453965766
 GameObject:
   m_ObjectHideFlags: 0
@@ -5821,9 +5816,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbf52d4d02f292246bca280d3982730f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  upgradeSystem: {fileID: 0}
   interactDistance: 3
   interactKey: 101
+  upgradeSystem: {fileID: 0}
 --- !u!114 &1936717043
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5836,40 +5831,69 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9dc00d9303409fb4fbb2c68897b8e8de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerStats: {fileID: 8720901371769516841}
-  playerHealth: {fileID: 8720901371769516835}
-  playerWallet: {fileID: 8720901371769516829}
-  upgradeMenu: {fileID: 1391737516}
-  currentWeapon: {fileID: 0}
-  audioSource: {fileID: 0}
-  upgradeSuccessClip: {fileID: 0}
-  upgradeFailClip: {fileID: 0}
+  menuPanel: {fileID: 1391737516}
+  coinsText: {fileID: 0}
   closeButton: {fileID: 1095767407}
   upgrades:
-  - upgradeName: "\u0417\u0434\u043E\u0440\u043E\u0432'\u044F"
+  - upgradeName: MAX HP
     upgradeType: 0
-    button: {fileID: 1687779317}
-    levelText: {fileID: 537465105}
+    upgradeText: {fileID: 537465105}
+    upgradeButton: {fileID: 1687779317}
+    level: 1
+    baseCost: 20
+    costMultiplier: 1.5
     upgradeValue: 5
     maxLevel: 10
-    baseCost: 20
-    currentLevel: 0
-  - upgradeName: "\u0420\u0435\u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0456\u044F"
+  - upgradeName: Fire Rate
     upgradeType: 4
-    button: {fileID: 1643622558}
-    levelText: {fileID: 1884272211}
-    upgradeValue: 0
-    maxLevel: 0
-    baseCost: 0
-    currentLevel: 0
-  - upgradeName: "\u0428\u0432\u0438\u0434\u043A\u0456\u0441\u0442\u044C \u043F\u0435\u0440\u0435\u0441\u0443\u0432\u0430\u043D\u043D\u044F"
-    upgradeType: 2
-    button: {fileID: 18408846}
-    levelText: {fileID: 799844022}
+    upgradeText: {fileID: 1297420720}
+    upgradeButton: {fileID: 513870053}
+    level: 1
+    baseCost: 45
+    costMultiplier: 1.5
+    upgradeValue: 1
+    maxLevel: 10
+  - upgradeName: Regen HP
+    upgradeType: 7
+    upgradeText: {fileID: 1884272211}
+    upgradeButton: {fileID: 1643622558}
+    level: 1
+    baseCost: 20
+    costMultiplier: 1.6
     upgradeValue: 0.1
     maxLevel: 10
-    baseCost: 45
-    currentLevel: 0
+  - upgradeName: Move Speed
+    upgradeType: 2
+    upgradeText: {fileID: 799844022}
+    upgradeButton: {fileID: 18408846}
+    level: 1
+    baseCost: 20
+    costMultiplier: 1.5
+    upgradeValue: 0.5
+    maxLevel: 10
+  - upgradeName: Shield Duration
+    upgradeType: 5
+    upgradeText: {fileID: 1750469031}
+    upgradeButton: {fileID: 2025449999}
+    level: 1
+    baseCost: 20
+    costMultiplier: 2
+    upgradeValue: 1
+    maxLevel: 10
+  - upgradeName: Shield Duration
+    upgradeType: 3
+    upgradeText: {fileID: 1243833555}
+    upgradeButton: {fileID: 464375946}
+    level: 1
+    baseCost: 20
+    costMultiplier: 1.5
+    upgradeValue: 0.3
+    maxLevel: 10
+  audioSource: {fileID: 0}
+  openClip: {fileID: 0}
+  closeClip: {fileID: 0}
+  upgradeSuccessClip: {fileID: 0}
+  upgradeFailClip: {fileID: 0}
 --- !u!114 &1976594167 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3422249284915515140, guid: de3501bbac2ae464ca2c45f3162fff9d, type: 3}
@@ -7017,11 +7041,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseMaxHP: 100
-  baseRegen: 1
+  baseRegen: 0
   maxHP: 100
   currentHP: 100
   regenRate: 0
   destroyOnDeath: 1
+  currentHealth: 0
 --- !u!114 &8720901371769516836
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7089,11 +7114,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2add075ea15d258468887229e35837cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
-  moveSpeed: 5
   damage: 10
+  moveSpeed: 5
+  maxHealth: 100
+  regen: 0
   shieldDuration: 3
-  currentHealth: 0
+  critChance: 0.1
+  critMultiplier: 1.5
+  fireRate: 1
 --- !u!4 &8720901372027282903 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 473458954895537861, guid: 787ecb276a3022c449a850a367b6c5a4, type: 3}

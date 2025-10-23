@@ -1,46 +1,55 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// Простий клас для зберігання характеристик гравця
-/// </summary>
+[RequireComponent(typeof(Health))]
 public class PlayerStats : MonoBehaviour
 {
-    [Header("Base Stats")]
-    public float maxHealth = 100f;
-    public float moveSpeed = 5f;
+    [Header("Основні параметри")]
     public float damage = 10f;
-    public float shieldDuration = 3f;
+    public float moveSpeed = 5f;
+    public float maxHealth = 100f;
+    public float regen = 0f;
+    public float shieldDuration = 0f;
 
-    [Header("Current Runtime Stats")]
-    public float currentHealth;
+    [Header("Критичні удари")]
+    [Range(0f, 100f)] public float critChance = 10f;
+    [Range(1f, 5f)] public float critMultiplier = 1.5f;
 
-    private void Start()
+    [Header("Інше")]
+    public float fireRate = 1f;
+
+    private Health health;
+
+    private void Awake()
     {
-        currentHealth = maxHealth;
+        health = GetComponent<Health>();
+        if (health != null)
+        {
+            health.SetMaxHP(maxHealth);
+            health.SetRegenRate(regen);
+        }
     }
 
-    public void AddHealth(float value)
+    public void AddDamage(float amount) => damage += amount;
+    public void AddSpeed(float amount) => moveSpeed += amount;
+    public void AddHealth(float amount)
     {
-        maxHealth += value;
-        currentHealth = maxHealth;
-        Debug.Log($"❤️ Нове здоров'я: {maxHealth}");
+        maxHealth += amount;
+        if (health != null)
+            health.SetMaxHP(maxHealth);
     }
-
-    public void AddDamage(float value)
+    public void AddRegen(float amount)
     {
-        damage += value;
-        Debug.Log($"⚔️ Новий урон: {damage}");
+        regen += amount;
+        if (health != null)
+            health.SetRegenRate(regen);
     }
+    public void AddShieldDuration(float amount) => shieldDuration += amount;
+    public void AddCritChance(float amount) => critChance += amount;
+    public void AddCritMultiplier(float amount) => critMultiplier += amount;
 
-    public void AddSpeed(float value)
+    public void AddFireRate(float amount)
     {
-        moveSpeed += value;
-        Debug.Log($"🏃‍♂️ Нова швидкість: {moveSpeed}");
-    }
-
-    public void AddShieldDuration(float value)
-    {
-        shieldDuration += value;
-        Debug.Log($"🛡️ Новий час щита: {shieldDuration}");
+        fireRate += amount;
+        fireRate = Mathf.Clamp(fireRate, 0.1f, 10f);
     }
 }

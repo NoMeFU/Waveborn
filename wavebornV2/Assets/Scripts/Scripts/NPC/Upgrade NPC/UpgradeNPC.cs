@@ -2,37 +2,57 @@
 
 public class UpgradeNpc : MonoBehaviour
 {
-    [SerializeField] private UpgradeSystem upgradeSystem;
+    [Header("Параметри взаємодії")]
     [SerializeField] private float interactDistance = 3f;
     [SerializeField] private KeyCode interactKey = KeyCode.E;
 
+    [Header("Посилання")]
+    [SerializeField] private UpgradeSystem upgradeSystem;
+
     private Transform player;
+    private bool isPlayerNear = false;
 
     private void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player").transform;
+        // Шукаємо гравця
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj) player = playerObj.transform;
+        else Debug.LogWarning("⚠️ Player не знайдено! Переконайся, що у гравця тег 'Player'.");
+
+        // Якщо UpgradeSystem не задано вручну — знайдемо автоматично
+        if (!upgradeSystem)
+            upgradeSystem = FindObjectOfType<UpgradeSystem>();
     }
 
     private void Update()
     {
-        if (player == null) return;
+        if (player == null || upgradeSystem == null)
+            return;
 
         float distance = Vector3.Distance(transform.position, player.position);
+        bool nowNear = distance <= interactDistance;
 
-        // Якщо гравець поруч
-        if (distance <= interactDistance)
+        // Гравець наблизився вперше
+        if (nowNear && !isPlayerNear)
         {
-
-            if (Input.GetKeyDown(interactKey))
-            {
-                // Відкриваємо меню прокачки
-                upgradeSystem.OpenMenu();
-            }
+            isPlayerNear = true;
+            Debug.Log("🟢 Гравець поруч. Натисни [E] щоб відкрити меню.");
         }
-        else
+        // Гравець відійшов
+        else if (!nowNear && isPlayerNear)
         {
-            // Якщо гравець далеко — закриваємо меню
+            isPlayerNear = false;
             upgradeSystem.CloseMenu();
+        }
+
+        // Якщо поруч — можна натискати E
+        if (isPlayerNear && Input.GetKeyDown(interactKey))
+        {
+            // Якщо меню вже відкрите — закриваємо
+            if (upgradeSystem.IsOpen)
+                upgradeSystem.CloseMenu();
+            else
+                upgradeSystem.OpenMenu();
         }
     }
 }
