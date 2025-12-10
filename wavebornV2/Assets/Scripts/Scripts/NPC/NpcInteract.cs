@@ -6,7 +6,7 @@ public class NpcInteract : MonoBehaviour
     [Header("Interaction Settings")]
     [SerializeField] private float interactDistance = 3f;
     [SerializeField] private KeyCode interactKey = KeyCode.E;
-    [SerializeField] private GameObject interactionHint; // UI підказка “Натисни E”
+    [SerializeField] private GameObject interactionHint;
 
     [Header("Linked Components")]
     [SerializeField] private DialogueUI dialogueUI;
@@ -16,55 +16,58 @@ public class NpcInteract : MonoBehaviour
 
     private void Start()
     {
-        // Пошук гравця
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        if (!player)
+        {
+            Debug.LogError($"[{name}] Не знайдено гравця з тегом 'Player'!");
+            return;
+        }
 
-        // Автоматичний пошук DialogueUI
         if (!dialogueUI)
             dialogueUI = GetComponentInChildren<DialogueUI>();
 
-        // Переконуємося, що колайдер тригер
-        Collider col = GetComponent<Collider>();
-        col.isTrigger = true;
+        if (!dialogueUI)
+            Debug.LogError($"[{name}] DialogueUI не знайдено!");
 
-        // Ховаємо підказку спочатку
         if (interactionHint)
             interactionHint.SetActive(false);
+
+        Debug.Log($"[{name}] NPC ініціалізовано. Відстань взаємодії: {interactDistance}m");
     }
 
     private void Update()
     {
+        if (!player) return;
+
         // Якщо діалог вже відкритий — не перевіряємо взаємодію
         if (DialogueUI.IsAnyOpen())
+        {
+            if (interactionHint && interactionHint.activeSelf)
+                interactionHint.SetActive(false);
             return;
+        }
 
+        // Перевірка відстані до гравця
+        float distance = Vector3.Distance(transform.position, player.position);
+        bool inRange = distance <= interactDistance;
+
+        // Оновлюємо статус тільки при зміні
+        if (inRange != playerInRange)
+        {
+            playerInRange = inRange;
+
+            if (interactionHint)
+                interactionHint.SetActive(playerInRange);
+
+            if (playerInRange)
+                Debug.Log($"[{name}] Гравець увійшов в зону взаємодії (відстань: {distance:F2}m)");
+        }
+
+        // Перевірка натискання клавіші
         if (playerInRange && Input.GetKeyDown(interactKey))
         {
+            Debug.Log($"[{name}] Натиснуто {interactKey} - відкриваю діалог!");
             Interact();
-        }
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            playerInRange = true;
-            if (interactionHint)
-                interactionHint.SetActive(true);
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            playerInRange = false;
-            if (interactionHint)
-                interactionHint.SetActive(false);
-
-            // Закрити UI, якщо вийшов із зони
-            if (dialogueUI && dialogueUI.IsOpen)
-                dialogueUI.CloseAll();
         }
     }
 
@@ -77,5 +80,12 @@ public class NpcInteract : MonoBehaviour
         }
 
         dialogueUI.OpenMenu();
+    }
+
+    // Візуалізація зони взаємодії в Scene View
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = playerInRange ? Color.green : Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, interactDistance);
     }
 }

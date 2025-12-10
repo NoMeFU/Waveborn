@@ -18,8 +18,9 @@ public class DialogueUI : MonoBehaviour
     [SerializeField] private Button nextButton;
     [SerializeField] private KeyCode advanceKey = KeyCode.Space;
 
-    [Header("Debug / Data")]
-    [SerializeField] private string[] fallbackLines;
+    [Header("Dialogue Data")]
+    [SerializeField] private DialogueData dialogueData; // ScriptableObject
+    [SerializeField] private string[] fallbackLines; // Запасний варіант
 
     private Action onDialogueEnd;
     public bool IsOpen => (menuRoot != null && menuRoot.activeSelf) || (dialogueRoot != null && dialogueRoot.activeSelf);
@@ -28,16 +29,44 @@ public class DialogueUI : MonoBehaviour
     private int _index = -1;
     private bool _pushedInputBlock = false;
 
-    private static readonly System.Collections.Generic.HashSet<DialogueUI> _openUIs = new(); // слідкуємо за активними меню
+    private static readonly System.Collections.Generic.HashSet<DialogueUI> _openUIs = new();
 
     private void Awake()
     {
         SafeSet(menuRoot, false);
         SafeSet(dialogueRoot, false);
 
-        if (whatButton) whatButton.onClick.AddListener(OpenWhat);
-        if (exitButton) exitButton.onClick.AddListener(CloseAll);
-        if (nextButton) nextButton.onClick.AddListener(Advance);
+        if (whatButton)
+        {
+            whatButton.onClick.AddListener(OpenWhat);
+            Debug.Log($"[DialogueUI] What button listener додано");
+        }
+
+        if (exitButton)
+        {
+            exitButton.onClick.AddListener(CloseAll);
+            Debug.Log($"[DialogueUI] Exit button listener додано");
+        }
+
+        if (nextButton)
+        {
+            nextButton.onClick.AddListener(Advance);
+            Debug.Log($"[DialogueUI] Next button listener додано");
+        }
+
+        // Перевірка даних діалогу
+        if (dialogueData != null && dialogueData.Count > 0)
+        {
+            Debug.Log($"[DialogueUI] DialogueData завантажено: {dialogueData.Count} рядків");
+        }
+        else if (fallbackLines != null && fallbackLines.Length > 0)
+        {
+            Debug.Log($"[DialogueUI] Використовую fallbackLines: {fallbackLines.Length} рядків");
+        }
+        else
+        {
+            Debug.LogWarning($"[DialogueUI] Діалог не налаштовано! Додайте DialogueData або fallbackLines.");
+        }
     }
 
     private void Update()
@@ -50,6 +79,8 @@ public class DialogueUI : MonoBehaviour
 
     public void OpenMenu()
     {
+        Debug.Log($"[DialogueUI] OpenMenu() викликано");
+
         if (!_pushedInputBlock) { InputBlocker.Push(); _pushedInputBlock = true; }
 
         _openUIs.Add(this);
@@ -62,6 +93,8 @@ public class DialogueUI : MonoBehaviour
 
     public void CloseAll()
     {
+        Debug.Log($"[DialogueUI] CloseAll() викликано");
+
         SafeSet(menuRoot, false);
         SafeSet(dialogueRoot, false);
 
@@ -82,16 +115,44 @@ public class DialogueUI : MonoBehaviour
 
     private void OpenWhat()
     {
-        StartDialogue(fallbackLines, null);
+        Debug.Log($"[DialogueUI] OpenWhat() викликано");
+
+        // Пріоритет: DialogueData -> fallbackLines -> дефолтний текст
+        string[] linesToUse = null;
+
+        if (dialogueData != null && dialogueData.Count > 0)
+        {
+            linesToUse = dialogueData.lines;
+            Debug.Log($"[DialogueUI] Використовую DialogueData: {dialogueData.Count} рядків");
+        }
+        else if (fallbackLines != null && fallbackLines.Length > 0)
+        {
+            linesToUse = fallbackLines;
+            Debug.Log($"[DialogueUI] Використовую fallbackLines: {fallbackLines.Length} рядків");
+        }
+        else
+        {
+            Debug.LogWarning($"[DialogueUI] Діалог не налаштовано! Використовую дефолтний текст.");
+            linesToUse = new string[]
+            {
+                "Привіт! Я NPC.",
+                "Діалог не налаштовано.",
+                "Додайте DialogueData в Inspector!"
+            };
+        }
+
+        StartDialogue(linesToUse, null);
     }
 
     public void StartDialogue(string[] lines, Action onEnd = null)
     {
+        Debug.Log($"[DialogueUI] StartDialogue() викликано. Рядків: {(lines != null ? lines.Length : 0)}");
+
         onDialogueEnd = onEnd;
         if (!_pushedInputBlock) { InputBlocker.Push(); _pushedInputBlock = true; }
         _openUIs.Add(this);
 
-        _currentDialogue = lines ?? fallbackLines;
+        _currentDialogue = lines;
         _index = -1;
 
         SafeSet(menuRoot, false);
@@ -103,15 +164,30 @@ public class DialogueUI : MonoBehaviour
         Advance();
     }
 
-    // Overload used by other scripts (no params) to start a simple dialogue that will call onDialogueEnd when closed
+    // Overload для DialogueData
+    public void StartDialogue(DialogueData data, Action onEnd = null)
+    {
+        if (data != null && data.Count > 0)
+        {
+            StartDialogue(data.lines, onEnd);
+        }
+        else
+        {
+            Debug.LogWarning($"[DialogueUI] DialogueData порожній або null!");
+        }
+    }
+
     public void StartDialogue(Action onEnd = null)
     {
-        StartDialogue(fallbackLines, onEnd);
+        if (dialogueData != null && dialogueData.Count > 0)
+            StartDialogue(dialogueData.lines, onEnd);
+        else
+            StartDialogue(fallbackLines, onEnd);
     }
 
     private void Advance()
     {
-        if (_currentDialogue == null)
+        if (_currentDialogue == null || _currentDialogue.Length == 0)
         {
             EndDialogueImmediately();
             return;
@@ -120,6 +196,7 @@ public class DialogueUI : MonoBehaviour
         _index++;
         if (_index >= _currentDialogue.Length)
         {
+            // Повертаємось до меню після останнього рядка
             SafeSet(dialogueRoot, false);
             if (textField) textField.gameObject.SetActive(false);
             SafeSet(menuRoot, true);
@@ -130,12 +207,14 @@ public class DialogueUI : MonoBehaviour
             onDialogueEnd?.Invoke();
             onDialogueEnd = null;
 
-            _openUIs.Remove(this);
-            if (_pushedInputBlock) { InputBlocker.Pop(); _pushedInputBlock = false; }
             return;
         }
 
-        if (textField) textField.text = _currentDialogue[_index];
+        if (textField)
+        {
+            textField.text = _currentDialogue[_index];
+            Debug.Log($"[DialogueUI] Показую рядок {_index + 1}/{_currentDialogue.Length}: {_currentDialogue[_index]}");
+        }
     }
 
     private void EndDialogueImmediately()
