@@ -50,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 9b6505e4a3c1c834c954d82f98718c99, type: 3}
       propertyPath: m_Name
-      value: Coin 2
+      value: Coin
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
@@ -104,8 +104,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   coinValue: 1
-  pickupSound: {fileID: 0}
-  destroyDelay: 0.1
+  pickupSound: {fileID: 8300000, guid: 9e9f93a197fa13f42a6df2583d684bf5, type: 3}
+  destroyDelay: 0.25
 --- !u!135 &9077750950692376806
 SphereCollider:
   m_ObjectHideFlags: 0

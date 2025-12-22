@@ -1,4 +1,4 @@
-using System.Collections;
+п»їusing System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -12,29 +12,29 @@ public class GameModeSurvival : MonoBehaviour
     [Header("UI (optional)")]
     [SerializeField] private TextMeshProUGUI waveText;         // "Wave 3"
     [SerializeField] private TextMeshProUGUI enemiesLeftText;  // "Left: 12"
-    [SerializeField] private TextMeshProUGUI bossIncomingText; // "BOSS INCOMING!" (опціонально)
+    [SerializeField] private TextMeshProUGUI bossIncomingText; // "BOSS INCOMING!" (РѕРїС†С–РѕРЅР°Р»СЊРЅРѕ)
 
     [Header("Mode")]
     [SerializeField] private bool usePredefinedWaves = false;
     [SerializeField] private List<WaveAsset> predefinedWaves = new();
 
-    // ---------- БОСИ ----------
+    // ---------- Р‘РћРЎР ----------
     [System.Serializable]
     public class BossEntry
     {
         public GameObject prefab;
-        [Range(1, 100)] public int weight = 10;   // вага випадіння
-        [Min(1)] public int unlockWave = 1;      // з якої хвилі доступний
+        [Range(1, 100)] public int weight = 10;   // РІР°РіР° РІРёРїР°РґС–РЅРЅСЏ
+        [Min(1)] public int unlockWave = 1;      // Р· СЏРєРѕС— С…РІРёР»С– РґРѕСЃС‚СѓРїРЅРёР№
     }
 
     [Header("Boss Waves")]
-    [SerializeField, Min(0)] private int bossEveryNWaves = 5; // 0 = боси вимкнені
+    [SerializeField, Min(0)] private int bossEveryNWaves = 5; // 0 = Р±РѕСЃРё РІРёРјРєРЅРµРЅС–
     [SerializeField] private List<BossEntry> bosses = new();
-    [SerializeField, Min(1)] private int bossCountOnBossWave = 1; // скільки босів на бос-хвилі
+    [SerializeField, Min(1)] private int bossCountOnBossWave = 1; // СЃРєС–Р»СЊРєРё Р±РѕСЃС–РІ РЅР° Р±РѕСЃ-С…РІРёР»С–
     [SerializeField, Min(0f)] private float bossWarningTime = 2.0f;
 
-    // ---------- Автогенерація звичайних хвиль ----------
-    [Header("Auto Generation (коли usePredefinedWaves = false)")]
+    // ---------- РђРІС‚РѕРіРµРЅРµСЂР°С†С–СЏ Р·РІРёС‡Р°Р№РЅРёС… С…РІРёР»СЊ ----------
+    [Header("Auto Generation (РєРѕР»Рё usePredefinedWaves = false)")]
     [SerializeField, Min(1)] private int baseCount = 6;
     [SerializeField, Min(0)] private int addPerWave = 2;
 
@@ -45,8 +45,8 @@ public class GameModeSurvival : MonoBehaviour
     [SerializeField, Min(1)] private int unlockTier2AtWave = 3;
     [SerializeField, Min(1)] private int unlockTier3AtWave = 7;
 
-    [Tooltip("Розподіл типів у хвилі. Нормалізується автоматично.")]
-    [SerializeField] private Vector3 tierWeightsEarly = new Vector3(1f, 0f, 0f);     // лише T1
+    [Tooltip("Р РѕР·РїРѕРґС–Р» С‚РёРїС–РІ Сѓ С…РІРёР»С–. РќРѕСЂРјР°Р»С–Р·СѓС”С‚СЊСЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РЅРѕ.")]
+    [SerializeField] private Vector3 tierWeightsEarly = new Vector3(1f, 0f, 0f);     // Р»РёС€Рµ T1
     [SerializeField] private Vector3 tierWeightsMid = new Vector3(0.7f, 0.3f, 0f); // T1+T2
     [SerializeField] private Vector3 tierWeightsLate = new Vector3(0.5f, 0.3f, 0.2f);// T1+T2+T3
 
@@ -56,8 +56,8 @@ public class GameModeSurvival : MonoBehaviour
     public bool IsWaveRunning { get; private set; } = false;
 
     public System.Action<int> OnWaveStarted;
-    public System.Action<int> OnWaveCleared;   // коли останній ворог впав
-    public System.Action<int> OnReadyForNext;  // коли готові стартувати наступну (ручний старт)
+    public System.Action<int> OnWaveCleared;   // РєРѕР»Рё РѕСЃС‚Р°РЅРЅС–Р№ РІРѕСЂРѕРі РІРїР°РІ
+    public System.Action<int> OnReadyForNext;  // РєРѕР»Рё РіРѕС‚РѕРІС– СЃС‚Р°СЂС‚СѓРІР°С‚Рё РЅР°СЃС‚СѓРїРЅСѓ (СЂСѓС‡РЅРёР№ СЃС‚Р°СЂС‚)
 
     private Coroutine _waveRoutine;
 
@@ -75,7 +75,7 @@ public class GameModeSurvival : MonoBehaviour
         UpdateAliveUI();
     }
 
-    /// <summary>Запускає рівно одну хвилю (викликається з тригера).</summary>
+    /// <summary>Р—Р°РїСѓСЃРєР°С” СЂС–РІРЅРѕ РѕРґРЅСѓ С…РІРёР»СЋ (РІРёРєР»РёРєР°С”С‚СЊСЃСЏ Р· С‚СЂРёРіРµСЂР° Р°Р±Рѕ РєРЅРѕРїРєРё).</summary>
     public void RequestStartNextWave()
     {
         if (IsWaveRunning || _waveRoutine != null) return;
@@ -122,7 +122,7 @@ public class GameModeSurvival : MonoBehaviour
                 yield return StartCoroutine(SpawnAutoWave(CurrentWave));
         }
 
-        // чекаємо, поки всіх знищать
+        // С‡РµРєР°С”РјРѕ, РїРѕРєРё РІСЃС–С… Р·РЅРёС‰Р°С‚СЊ
         while (AliveEnemies > 0)
             yield return null;
 
@@ -130,11 +130,11 @@ public class GameModeSurvival : MonoBehaviour
         IsWaveRunning = false;
         _waveRoutine = null;
 
-        // готові до наступної — тригер може показати «Натисни E…»
+        // РіРѕС‚РѕРІС– РґРѕ РЅР°СЃС‚СѓРїРЅРѕС— вЂ” С‚СЂРёРіРµСЂ РјРѕР¶Рµ РїРѕРєР°Р·Р°С‚Рё В«РќР°С‚РёСЃРЅРё EвЂ¦В»
         OnReadyForNext?.Invoke(CurrentWave + 1);
     }
 
-    // ===== ручна хвиля зі ScriptableObject =====
+    // ===== СЂСѓС‡РЅР° С…РІРёР»СЏ Р·С– ScriptableObject =====
     private IEnumerator SpawnPredefinedWave(WaveAsset wave)
     {
         foreach (var e in wave.Entries)
@@ -148,12 +148,12 @@ public class GameModeSurvival : MonoBehaviour
         }
     }
 
-    // ===== авто-генерація хвилі =====
+    // ===== Р°РІС‚Рѕ-РіРµРЅРµСЂР°С†С–СЏ С…РІРёР»С– =====
     private IEnumerator SpawnAutoWave(int waveNumber)
     {
         int total = Mathf.Max(1, baseCount + (waveNumber - 1) * addPerWave);
 
-        // вибір тиру + ваги
+        // РІРёР±С–СЂ С‚РёСЂСѓ + РІР°РіРё
         Vector3 w;
         List<GameObject> t1 = tier1Enemies, t2 = null, t3 = null;
         if (waveNumber >= unlockTier3AtWave && tier3Enemies.Count > 0)
@@ -182,7 +182,7 @@ public class GameModeSurvival : MonoBehaviour
         if (t3 != null && t3.Count > 0) for (int i = 0; i < c3; i++) queue.Add(PickRand(t3));
         while (queue.Count < total && t1 != null && t1.Count > 0) queue.Add(PickRand(t1));
 
-        // шафл
+        // С€Р°С„Р»
         for (int i = 0; i < queue.Count; i++)
         {
             int j = Random.Range(i, queue.Count);
@@ -197,7 +197,7 @@ public class GameModeSurvival : MonoBehaviour
         }
     }
 
-    // ===== спавн одиниці + підписка на смерть =====
+    // ===== СЃРїР°РІРЅ РѕРґРёРЅРёС†С– + РїС–РґРїРёСЃРєР° РЅР° СЃРјРµСЂС‚СЊ =====
     private void SpawnOne(GameObject prefab, Vector3 pos, Quaternion rot)
     {
         if (!prefab) return;
@@ -217,7 +217,7 @@ public class GameModeSurvival : MonoBehaviour
         }
     }
 
-    // ===== утиліти =====
+    // ===== СѓС‚РёР»С–С‚Рё =====
     private Transform PickSpawn()
     {
         if (spawnPoints.Count == 0) return transform;
@@ -239,15 +239,15 @@ public class GameModeSurvival : MonoBehaviour
 
     private void UpdateWaveUI()
     {
-        if (waveText) waveText.text = $"Wave {Mathf.Max(1, CurrentWave)}";
+        if (waveText) waveText.text = "РҐРІРёР»СЏ " + Mathf.Max(1, CurrentWave);
     }
 
     private void UpdateAliveUI()
     {
-        if (enemiesLeftText) enemiesLeftText.text = $"Left: {AliveEnemies}";
+        if (enemiesLeftText) enemiesLeftText.text = "Р’РѕСЂРѕРіС–РІ: " + AliveEnemies;
     }
 
-    // ===== бос-логіка =====
+    // ===== Р±РѕСЃ-Р»РѕРіС–РєР° =====
     private bool HasAnyAvailableBoss(int wave)
     {
         foreach (var b in bosses)

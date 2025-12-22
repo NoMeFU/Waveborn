@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Collider))]
 public class NpcInteract : MonoBehaviour
@@ -6,13 +7,25 @@ public class NpcInteract : MonoBehaviour
     [Header("Interaction Settings")]
     [SerializeField] private float interactDistance = 3f;
     [SerializeField] private KeyCode interactKey = KeyCode.E;
-    [SerializeField] private GameObject interactionHint;
+    [SerializeField] private GameObject interactionHint; // Для ПК
+    [SerializeField] private GameObject mobileInteractButton; // Для мобільних
 
     [Header("Linked Components")]
     [SerializeField] private DialogueUI dialogueUI;
 
     private Transform player;
     private bool playerInRange = false;
+    private bool isMobile = false;
+
+    private void Awake()
+    {
+        // Визначаємо чи це мобільний пристрій
+        isMobile = Application.isMobilePlatform;
+
+#if UNITY_ANDROID || UNITY_IOS
+            isMobile = true;
+#endif
+    }
 
     private void Start()
     {
@@ -25,14 +38,27 @@ public class NpcInteract : MonoBehaviour
 
         if (!dialogueUI)
             dialogueUI = GetComponentInChildren<DialogueUI>();
-
         if (!dialogueUI)
             Debug.LogError($"[{name}] DialogueUI не знайдено!");
 
         if (interactionHint)
             interactionHint.SetActive(false);
 
-        Debug.Log($"[{name}] NPC ініціалізовано. Відстань взаємодії: {interactDistance}m");
+        if (mobileInteractButton)
+            mobileInteractButton.SetActive(false);
+
+        // Підключаємо мобільну кнопку
+        if (mobileInteractButton && isMobile)
+        {
+            var button = mobileInteractButton.GetComponent<Button>();
+            if (button != null)
+            {
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(OnMobileInteractClick);
+            }
+        }
+
+        Debug.Log($"[{name}] NPC ініціалізовано. Відстань взаємодії: {interactDistance}m. Платформа: {(isMobile ? "Mobile" : "PC")}");
     }
 
     private void Update()
@@ -42,8 +68,7 @@ public class NpcInteract : MonoBehaviour
         // Якщо діалог вже відкритий — не перевіряємо взаємодію
         if (DialogueUI.IsAnyOpen())
         {
-            if (interactionHint && interactionHint.activeSelf)
-                interactionHint.SetActive(false);
+            ShowInteractionUI(false);
             return;
         }
 
@@ -55,20 +80,44 @@ public class NpcInteract : MonoBehaviour
         if (inRange != playerInRange)
         {
             playerInRange = inRange;
-
-            if (interactionHint)
-                interactionHint.SetActive(playerInRange);
+            ShowInteractionUI(playerInRange);
 
             if (playerInRange)
                 Debug.Log($"[{name}] Гравець увійшов в зону взаємодії (відстань: {distance:F2}m)");
         }
 
-        // Перевірка натискання клавіші
-        if (playerInRange && Input.GetKeyDown(interactKey))
+        // Перевірка натискання клавіші (тільки для ПК)
+        if (playerInRange && !isMobile && Input.GetKeyDown(interactKey))
         {
             Debug.Log($"[{name}] Натиснуто {interactKey} - відкриваю діалог!");
             Interact();
         }
+    }
+
+    // Показати/сховати UI взаємодії
+    private void ShowInteractionUI(bool show)
+    {
+        if (isMobile)
+        {
+            // На мобільних показуємо кнопку
+            if (mobileInteractButton)
+                mobileInteractButton.SetActive(show);
+        }
+        else
+        {
+            // На ПК показуємо підказку
+            if (interactionHint)
+                interactionHint.SetActive(show);
+        }
+    }
+
+    // Обробник мобільної кнопки
+    private void OnMobileInteractClick()
+    {
+        if (!playerInRange) return;
+
+        Debug.Log($"[{name}] Натиснуто мобільну кнопку - відкриваю діалог!");
+        Interact();
     }
 
     private void Interact()

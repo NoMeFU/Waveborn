@@ -18,7 +18,8 @@ public class DoctorNPC : MonoBehaviour
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private TMP_Text dialogueText;
     [SerializeField] private Image avatarImage;
-    [SerializeField] private TMP_Text promptText;
+    [SerializeField] private TMP_Text promptText; // Для ПК
+    [SerializeField] private GameObject mobileInteractButton; // Для мобільних
     [SerializeField] private Button healButton;
     [SerializeField] private Button exitButton;
 
@@ -31,8 +32,19 @@ public class DoctorNPC : MonoBehaviour
     private bool isPlayerNearby = false;
     private bool isDialogueActive = false;
     private bool isTyping = false;
+    private bool isMobile = false;
     private int currentLine = 0;
     private Coroutine typingCoroutine;
+
+    private void Awake()
+    {
+        // Визначаємо чи це мобільний пристрій
+        isMobile = Application.isMobilePlatform;
+
+#if UNITY_ANDROID || UNITY_IOS
+            isMobile = true;
+#endif
+    }
 
     private void Start()
     {
@@ -41,14 +53,27 @@ public class DoctorNPC : MonoBehaviour
 
         if (doctorCanvas) doctorCanvas.SetActive(false);
         if (promptText) promptText.gameObject.SetActive(false);
+        if (mobileInteractButton) mobileInteractButton.SetActive(false);
 
         if (healButton) healButton.onClick.AddListener(OnHealButtonClicked);
         if (exitButton) exitButton.onClick.AddListener(CloseDialogue);
+
+        // Підключаємо мобільну кнопку взаємодії
+        if (mobileInteractButton && isMobile)
+        {
+            var button = mobileInteractButton.GetComponent<Button>();
+            if (button != null)
+            {
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(OnMobileInteractClick);
+            }
+        }
     }
 
     private void Update()
     {
-        if (isPlayerNearby && Input.GetKeyDown(KeyCode.E))
+        // Тільки для ПК
+        if (isPlayerNearby && !isMobile && Input.GetKeyDown(KeyCode.E))
         {
             if (!isDialogueActive)
                 OpenDialogue();
@@ -62,11 +87,7 @@ public class DoctorNPC : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             isPlayerNearby = true;
-            if (promptText)
-            {
-                promptText.gameObject.SetActive(true);
-                promptText.text = "Натисни [E], щоб поговорити з Олівією";
-            }
+            ShowInteractionUI(true);
         }
     }
 
@@ -75,9 +96,40 @@ public class DoctorNPC : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             isPlayerNearby = false;
+            ShowInteractionUI(false);
             CloseDialogue();
-            if (promptText) promptText.gameObject.SetActive(false);
         }
+    }
+
+    // Показати/сховати UI взаємодії
+    private void ShowInteractionUI(bool show)
+    {
+        if (isMobile)
+        {
+            // На мобільних показуємо кнопку
+            if (mobileInteractButton)
+                mobileInteractButton.SetActive(show);
+        }
+        else
+        {
+            // На ПК показуємо текст
+            if (promptText)
+            {
+                promptText.gameObject.SetActive(show);
+                if (show) promptText.text = "Натисни [E], щоб поговорити з Олівією";
+            }
+        }
+    }
+
+    // Обробник мобільної кнопки
+    private void OnMobileInteractClick()
+    {
+        if (!isPlayerNearby) return;
+
+        if (!isDialogueActive)
+            OpenDialogue();
+        else
+            NextDialogueLine();
     }
 
     private void OpenDialogue()
@@ -92,7 +144,9 @@ public class DoctorNPC : MonoBehaviour
         currentLine = 0;
 
         if (doctorCanvas) doctorCanvas.SetActive(true);
-        if (promptText) promptText.gameObject.SetActive(false);
+
+        // Ховаємо UI взаємодії коли діалог відкритий
+        ShowInteractionUI(false);
 
         if (avatarImage && npcAvatar)
             avatarImage.sprite = npcAvatar;
@@ -184,5 +238,9 @@ public class DoctorNPC : MonoBehaviour
         if (doctorCanvas) doctorCanvas.SetActive(false);
         if (healButton) healButton.gameObject.SetActive(false);
         if (exitButton) exitButton.gameObject.SetActive(false);
+
+        // Показуємо UI взаємодії якщо гравець все ще поруч
+        if (isPlayerNearby)
+            ShowInteractionUI(true);
     }
 }

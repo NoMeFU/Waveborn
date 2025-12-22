@@ -8,7 +8,8 @@ public class NPCDialogue : MonoBehaviour
     [Header("Interaction Settings")]
     [SerializeField, Range(0.5f, 10f)] private float interactRadius = 3f;
     [SerializeField] private KeyCode interactKey = KeyCode.E;
-    [SerializeField] private GameObject interactionHint; // UI підказка "Натисни E"
+    [SerializeField] private GameObject interactionHint; // UI підказка "Натисни E" (для ПК)
+    [SerializeField] private GameObject mobileInteractButton; // Кнопка для мобільних
 
     [Header("UI Elements (specific to this NPC)")]
     [Tooltip("Panel / Canvas which will be shown for this NPC")]
@@ -31,6 +32,7 @@ public class NPCDialogue : MonoBehaviour
     // state
     private bool playerInRange = false;
     private bool isOpen = false;
+    private bool isMobile = false;
 
     // references
     private Transform player;
@@ -39,6 +41,13 @@ public class NPCDialogue : MonoBehaviour
     #region Unity lifecycle
     private void Awake()
     {
+        // Визначаємо чи це мобільний пристрій
+        isMobile = Application.isMobilePlatform;
+
+#if UNITY_ANDROID || UNITY_IOS
+            isMobile = true;
+#endif
+
         // ensure we have a SphereCollider we can control
         sphereCollider = GetComponent<SphereCollider>();
         if (sphereCollider == null)
@@ -58,6 +67,9 @@ public class NPCDialogue : MonoBehaviour
         if (interactionHint)
             interactionHint.SetActive(false);
 
+        if (mobileInteractButton)
+            mobileInteractButton.SetActive(false);
+
         if (closeButton)
         {
             closeButton.onClick.RemoveAllListeners();
@@ -68,6 +80,17 @@ public class NPCDialogue : MonoBehaviour
         {
             sendButton.onClick.RemoveAllListeners();
             sendButton.onClick.AddListener(SendPlayerMessage);
+        }
+
+        // Підключаємо мобільну кнопку взаємодії
+        if (mobileInteractButton && isMobile)
+        {
+            var button = mobileInteractButton.GetComponent<Button>();
+            if (button != null)
+            {
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(OnMobileInteractClick);
+            }
         }
     }
 
@@ -83,8 +106,8 @@ public class NPCDialogue : MonoBehaviour
 
     private void Update()
     {
-        // only allow interaction if player is in range
-        if (playerInRange && Input.GetKeyDown(interactKey))
+        // only allow interaction if player is in range (тільки для ПК)
+        if (playerInRange && !isMobile && Input.GetKeyDown(interactKey))
         {
             if (!isOpen)
                 StartDialogue();
@@ -99,19 +122,54 @@ public class NPCDialogue : MonoBehaviour
     {
         if (!other.CompareTag("Player")) return;
         playerInRange = true;
-        if (interactionHint != null && !isOpen)
-            interactionHint.SetActive(true);
+
+        if (!isOpen)
+            ShowInteractionUI(true);
     }
 
     private void OnTriggerExit(Collider other)
     {
         if (!other.CompareTag("Player")) return;
         playerInRange = false;
-        if (interactionHint != null)
-            interactionHint.SetActive(false);
+
+        ShowInteractionUI(false);
 
         // close dialogue if player leaves
         EndDialogue();
+    }
+    #endregion
+
+    #region UI Management
+    /// <summary>
+    /// Показує/ховає UI взаємодії в залежності від платформи
+    /// </summary>
+    private void ShowInteractionUI(bool show)
+    {
+        if (isMobile)
+        {
+            // На мобільних показуємо кнопку
+            if (mobileInteractButton)
+                mobileInteractButton.SetActive(show);
+        }
+        else
+        {
+            // На ПК показуємо текст-підказку
+            if (interactionHint)
+                interactionHint.SetActive(show);
+        }
+    }
+
+    /// <summary>
+    /// Обробник кнопки для мобільних
+    /// </summary>
+    private void OnMobileInteractClick()
+    {
+        if (!playerInRange) return;
+
+        if (!isOpen)
+            StartDialogue();
+        else
+            EndDialogue();
     }
     #endregion
 
@@ -128,8 +186,7 @@ public class NPCDialogue : MonoBehaviour
         isOpen = true;
 
         // hide hint while open
-        if (interactionHint != null)
-            interactionHint.SetActive(false);
+        ShowInteractionUI(false);
 
         // fill name and avatar
         string npcName = (npcMemory != null && !string.IsNullOrEmpty(npcMemory.data.npcName))
@@ -172,8 +229,8 @@ public class NPCDialogue : MonoBehaviour
             playerInput.text = "";
 
         // show hint again if player still inside range
-        if (interactionHint != null)
-            interactionHint.SetActive(playerInRange && !isOpen);
+        if (playerInRange)
+            ShowInteractionUI(true);
     }
 
     public bool IsOpen => isOpen;
@@ -194,6 +251,14 @@ public class NPCDialogue : MonoBehaviour
 
         dialogueText.text = $"Ти: {playerMessage}\n\n[{npcName}]: {response}";
         playerInput.text = "";
+    }
+    #endregion
+
+    #region Gizmos
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, interactRadius);
     }
     #endregion
 }

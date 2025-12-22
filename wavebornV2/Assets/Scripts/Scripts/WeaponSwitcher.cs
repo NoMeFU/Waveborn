@@ -25,6 +25,8 @@ public class WeaponSwitcher : MonoBehaviour
     public WeaponBase Current { get; private set; }
     public int SlotCount => weapons.Count;
     public event Action<WeaponBase> WeaponChanged;
+    public bool HasWeapon => Current != null;
+
 
     private void Awake()
     {
